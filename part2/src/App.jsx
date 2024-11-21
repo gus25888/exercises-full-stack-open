@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
-import axios from "axios"
+
 import Note from "./components/Note"
+import Notification from "./components/Notification";
 import noteService from "./services/notes";
+import Footer from "./components/Footer"
 
 /*
 * En esta aplicación el objetivo es registrar notas usando un formulario.
@@ -9,52 +11,19 @@ import noteService from "./services/notes";
 * el cual se levanta como un backend local con la utilidad "json-server"
 */
 
-/*
-* ***** Renderizado de múltiples elementos *****
-
-* Para el renderizado de elementos que son múltiples,
-* se puede usar "map" para "envolverlos" en la etiqueta correspondiente.
-? Ver notesToShow.map más abajo.
-! IMPORTANTE: Se debe agregar una propiedad "key" que sea única, para que React pueda reconocer y asociar correctamente cada componente generado con el loop. Su valor debe ser un id generado de forma específica para ese componente, es decir, NO se debe usar el indice del array en que se encuentran, por ej.
-
-*/
-
-/*
-* ***** Implementación de formularios *****
-
-* Para la implementación de Formularios se debe generar asociación del mismo con el State de la app
-* considerando que cada input o elemento que se requiere monitorear por cambios,
-* debe tener una inicialización como una variable en el State asociado a su "value".
-* Ej.: <input value={newNote} onChange={handleNoteChange} />
-
-
-! IMPORTANTE: Se debe especificar un evento "onChange" para que un input sea reconocido por React como uno que espera cambios. Si no se asume que es un "read-only"
-*/
-
 const App = (props) => {
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('a new note...')
   const [showAll, setShowAll] = useState(true)
-
   /*
-  * Obtención de notas desde json-server
-  *
-  * Para poder obtener datos (y sincronizarlos) desde una entidad externa (llamada HTTP, por ej.)
-  * en un componente, se debe usar un Hook de tipo Efecto (useEffect).
-  *
-  * Recibe dos parámetros
-  * 1. La función que realiza la gestión externa.
-  * 2. Un array que contiene los elementos que podrían hacer que el Efecto vuelva a ejecutarse, en respuesta al cambio de alguno de ellos. Si se envía uno vacío, se indica que el Efecto, se ejecuta en conjunto con el renderizado del componente asociado, y solo se vuelve a ejecutar si hay un re-renderizado del mismo.
-  *
+  * Se especifica un hook de estado para permitir el renderizado de un mensaje de error.
   */
-  const hook = () => {
-    console.log(`effect`);
+  const [errorMessage, setErrorMessage] = useState(null)
 
+  const hook = () => {
     noteService
       .getAll()
-      .then(initialNotes => {
-        setNotes(initialNotes)
-      })
+      .then(initialNotes => setNotes(initialNotes))
   }
   useEffect(hook, [])
 
@@ -100,7 +69,8 @@ const App = (props) => {
         setNotes(notes.map(note => note.id !== id ? note : returnedNote))
       })
       .catch(error => {
-        alert(`the note '${note.content}' was already deleted from server`)
+        setErrorMessage(`note '${note.content}' was already deleted from server`)
+        setTimeout(setErrorMessage(null), 5000)
         setNotes(notes.filter(note => note.id !== id))
       })
   }
@@ -110,15 +80,16 @@ const App = (props) => {
   return (
     <div>
       <h1>Notes</h1>
+      <Notification message={errorMessage} />
       <div>
         <button onClick={() => { setShowAll(!showAll) }}>
           show {showAll ? 'important' : 'all'}
         </button>
       </div>
       <ul>{
-        notesToShow.map((note, i) =>
+        notesToShow.map((note, id) =>
           <Note
-            key={i}
+            key={note.id}
             note={note}
             toggleImportance={() => toggleImportanceOf(note.id)} />
         )
@@ -128,6 +99,7 @@ const App = (props) => {
         <input value={newNote} onChange={handleNoteChange} />
         <button type="submit">save</button>
       </form>
+      <Footer />
     </div>
   )
 }
