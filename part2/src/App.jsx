@@ -12,7 +12,7 @@ import Footer from "./components/Footer"
 */
 
 const App = (props) => {
-  const [notes, setNotes] = useState([])
+  const [notes, setNotes] = useState(null)
   const [newNote, setNewNote] = useState('a new note...')
   const [showAll, setShowAll] = useState(true)
   /*
@@ -75,6 +75,10 @@ const App = (props) => {
       })
   }
 
+  //* Ya que se define que las "notes" parten como un null, se debe agregar un "return null" para que no se renderice nada la primera vez.
+  if (!notes) {
+    return null;
+  }
   const notesToShow = showAll ? notes : notes.filter(note => note.important)
 
   return (
