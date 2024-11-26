@@ -1,6 +1,6 @@
 # Notas de Curso de React
 
-## Part 1
+## Part 1 - Introducción a React
 
 ### Creacion de app
 
@@ -287,7 +287,7 @@ const App = () => {
 
 _________________________________________________________________________________________________________________________
 
-## Part 2
+## Part 2 - Comunicandose con el servidor
 
 ### Renderizado de múltiples elementos
 
@@ -422,3 +422,169 @@ export default {
             </div>
         )
     ```
+
+## Part 3 - Programando un servidor con NodeJS y Express
+
+### Express
+
+Libreria usada para la generación de endpoints (GET, POST, PUT, PATCH) que permiten la consulta de información a la fuente de almacenamiento de datos, como una base de datos o realizar cargas de archivos, entre muchas otras tareas.
+
+Se instala usando npm
+
+```sh
+npm i express
+```
+
+#### Uso básico
+
+```js
+const express = require('express')
+const app = express()
+
+let notes = [
+    {
+    id: 1,
+    content: "HTML is easy",
+    important: true
+  },
+  {
+    id: 2,
+    content: "Browser can execute only JavaScript",
+    important: false
+  },
+  {
+    id: 3,
+    content: "GET and POST are the most important methods of HTTP protocol",
+    important: true
+  }
+]
+
+/* Controladores de rutas de acceso: funciones get, post, etc.*/
+app.get('/', (request, response) => {
+    response.send('<h1>Hello world</h1>')
+})
+
+app.get('/api/notes/:id', (request, response) => {
+    const id = Number(request.params.id);
+    const note = notes.find(note => note.id === id)
+
+    if (note) {
+        response.json(note)
+    }
+    else {
+        response.status(404).end()
+    }
+})
+
+app.get('/api/notes', (request, response) => {
+    response.json(notes)
+})
+
+app.delete('/api/notes/:id', (request, response) => {
+    const id = Number(request.params.id);
+    notes = notes.filter(note => note.id !== id)
+
+    response.status(204).end()
+})
+
+app.post('/api/notes', (request, response) => {
+    const body = request.body
+
+    if (!body.content) {
+        return response.status(400).json({
+            error: 'content missing'
+        })
+    }
+
+    const note = {
+        content: body.content,
+        important: Boolean(body.important) || false,
+        id: generateId()
+    }
+
+    notes = notes.concat(note)
+
+    response.json(note)
+})
+
+const generateId = () => {
+    const maxId = notes.length > 0
+        ? Math.max(...notes.map(n => n.id))
+        : 0
+    return maxId + 1;
+}
+
+const PORT = 3001
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
+```
+
+#### Nodemon y su uso en desarrollo
+
+Nodemon es un package que permite el reinicio de la aplicación cada vez que se detecta algún cambio en su código.
+
+Como tal, este comportamiento, solo se requiere en ambiente de desarrollo, por lo que en su instalación se considera eso:
+
+```sh
+npm i nodemon --save-dev
+```
+
+### Uso de Middlewares
+
+Son funciones usadas para manejar objetos de request (datos de la solicitud HTTP) y response (datos de la respuesta a la solicitud realizada).
+
+Reciben 3 parámetros:
+
+- request: Datos de la solicitud enviada al endpoint
+- response: Datos a usar para la respuesta
+- next: Función que pasa el control al siguiente Middleware.
+
+Ejemplo:
+
+```js
+const requestLogger = (request, response, next) => {
+  console.log('Method:', request.method)
+  console.log('Path:  ', request.path)
+  console.log('Body:  ', request.body)
+  console.log('---')
+  next()
+}
+
+.
+.
+.
+.
+.
+
+// Luego, se llama de este manera:
+app.use(requestLogger)
+```
+
+El json-parser (`app.use(express.json())`) toma los datos sin procesar de las solicitudes que están almacenadas en el objeto *request*, los parsea en un objeto de JavaScript y lo asigna al objeto request como una nueva propiedad body.
+
+En la práctica, puedes utilizar varios middleware al mismo tiempo. Cuando tienes más de uno, se ejecutan uno por uno en el orden en el que se definieron en el código de la aplicación.
+
+ Pueden ser invocados antes o después de los controladores de rutas de acceso. Lo primero es lo común, ya que la idea es que hagan gestiones en los datos ANTES que la información llegue al controlador. Usarlos después es, por ejemplo, para poder manejar una solicitud que no se encuentre dentro de los controladores de ruta definidos.
+
+## CORS (Cross Origin Resource Sharing)
+
+Parte de la implementación del protocolo HTTP dentro de los navegadores es permitir solo conexiones del mismo origen. En este caso, origen se refiere al conjunto de protocolo, host y puerto.
+
+```http
+http://example.com:80/index.html
+
+protocol: http
+host: example.com
+port: 80
+```
+
+Si esto no es idéntico, se considera como una conexión de otro origen, lo que hace que el navegador revise el encabezado de la respuesta, denominado *Access-Control-Allow-Origin*. Si contiene '*' en la URL del HTML fuente, el navegador procesará la respuesta; de lo contrario, el navegador se negará a procesarla y generará un error.
+
+Para poder resolver esta situación, se implementó CORS, que es un mecanismo que permite la transferencia segura de elementos entre dos origenes distintos.
+
+En la práctica, se debe utilizar un package llamado *cors*, el cual se usa como un Middleware dentro del backend.
+
+```sh
+npm i cors
+```
