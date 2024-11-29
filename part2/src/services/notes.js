@@ -5,7 +5,7 @@ Este módulo permite la gestión del CRUD (sin delete por ahora) de las notes
 Se considera devolver solo la data de la response obtenida dentro de cada función.
 */
 
-const baseUrl = 'http://localhost:3001/api/notes'
+const baseUrl = '/api/notes'
 
 const getAll = () => {
     const request = axios.get(baseUrl)

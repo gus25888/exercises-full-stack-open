@@ -588,3 +588,51 @@ En la práctica, se debe utilizar un package llamado *cors*, el cual se usa como
 ```sh
 npm i cors
 ```
+
+Y así se usa dentro del servidor express:
+
+```js
+const cors = require('cors')
+const app = express()
+
+app.use(cors())
+```
+
+## Archivos Estáticos
+
+Express tiene la capacidad de responder a requests que necesiten archivos físicos. Esto permite levantar el __frontend__ desde el mismo servidor de backend.
+
+Para lograrlo, primero se debe copiar el directorio `dist` generado desde el frontend, el cual contiene los archivos que componen la app dentro de la raíz del backend. Este directorio se genera al ocupar el comando `build`:
+
+```sh
+npm run build
+```
+
+Esto compila todo el HTML, CSS y JS en un archivo por separado para cada uno y lo guarda en el directorio dist., lo cual deja la app como una SPA (Single Page Application)
+
+Luego, en el __backend__ se debe agregar un nuevo middleware de Express llamado `static` (que es el nombre genérico de los archivos físicos, ya sea CSS, JS, imágenes, etc.) e indicar la ruta en que se encuentran:
+
+```js
+app.use(express.static('dist'))
+```
+
+## Proxy
+
+Como en este caso, el servidor frontend espera que la comunicación se realice por el puerto 5173 para obtener los recursos necesarios para poder obtener los datos que renderiza. Por tanto, como el backend responde en el puerto 3001, se debe indicar esa situación para que así Vite redirija las solicitudes a la ruta *api* hacia el puerto correcto.
+
+Para ello, se debe modificar el archivo `vite.config.js`, agregando una propiedad `server:proxy` al `defineConfig` de la siguiente manera:
+
+```js
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      }
+    }
+  }
+})
+
+```

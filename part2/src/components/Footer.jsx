@@ -1,6 +1,6 @@
 const Footer = () => {
     const footerStyle = {
-        color: 'green',
+        color: 'lightblue',
         fontStyle: 'italic',
         fontSize: 16
     }
