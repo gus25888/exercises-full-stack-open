@@ -636,3 +636,269 @@ export default defineConfig({
 })
 
 ```
+
+## Despliegue de la app a internet
+
+Se usa un servicio cloud como fly.io
+
+Dentro se debe configurar la aplicación backend (en primera instancia) con los cambios para que pueda servir archivos estáticos.
+
+Al desplegar se debe considerar que se debe dejar especificado el puerto en que se levantará el backend indicandolo como parte de las variables de entorno del nuevo servicio.
+
+Comandos más importantes de fly.io
+
+```sh
+fly launch (Inicializar un nuevo servicio a desplegar)
+fly deploy (Desplegar la aplicación con los datos definidos)
+fly logs (Revisar los logs del servicio)
+fly scale count 1 (Para disminuir a 1 la cantidad de máquinas generadas por el despliegue)
+```
+
+## Depurar aplicaciones
+
+### Frontend
+
+Uso de la sentencia `debugger;` en cualquier punto del código, pausará la ejecución y permitirá revisar el estado y valor de las variables de la aplicación en ese momento.
+
+### Backend
+
+Uso del comando `node --inspect file.js` o `nodemon --inspect file.js` para permitir la misma revisión que con debugger.
+
+## Uso de MongoDB como repositorio de datos
+
+En MongoDB, los datos se guardan de forma no relacional identificados por un campo unico (_id) en Documents. Los Documentos pueden contener cualquier valor, asociado a una clave en una estructura similar a un objeto JS.
+
+Un conjunto de Documentos se agrupan en Colecciones. La base de datos finalmente, guarda de una a muchas colecciones.
+
+Se recomienda el uso del paquete `mongoose` (`npm install mongoose`) para realizar la conexión y gestión de datos de una BD Mongo, por su capa de abstracción (APIs) que facilita el manejo de la información.
+
+### Uso de mongoose
+
+Para la gestión con Mongoose, se usa los `schemas` para determinar el formato que tendrán los Documentos, indicando el nombre de cada clave y el tipo de dato que almacenará. Siempre deben contar con una clave `id` para su identificación.
+
+Además, los `models` permiten darle funcionalidad al schema al generar una nueva *"clase"* con el nombre dado al Schema.
+
+```js
+const mongoose = require('mongoose')
+const url = `mongodb+srv://${dbUser}:${password}@${cluster}/${dbName}?retryWrites=true&w=majority`
+mongoose.set('strictQuery', false)
+
+/* Conexión a mongoDB */
+mongoose
+    .connect(url)
+    .then(result => console.log(`Connected to MongoDB`))
+    .catch(error => console.log(`Error connecting to MongoDB`, error.message))
+
+/** Preparación de esquema para indicar los nombres y tipos de los documentos que se obtendrán desde la BD conectada. */
+const noteSchema = new mongoose.Schema({
+    content: String,
+    important: Boolean,
+})
+
+
+/*
+* Este proceso (set ('toJSON') ) permite personalizar el esquema y la forma en que devuelve los documentos desde Mongo.
+* Mongoose requiere que cada documento, tenga su propio "id" por lo que se genera esa variable en cada uno
+* basado en la propiedad de _id ya existente, pasando de ObjectId a string.
+* Finalmente, se eliminan las propiedades no utilizadas.
+*/
+noteSchema.set('toJSON', {
+    transform: (document, returnedObject) => {
+        returnedObject.id = returnedObject._id.toString()
+        delete returnedObject._id;
+        delete returnedObject.__v;
+    }
+})
+
+// Definición y exportación del modelo.
+module.exports = mongoose.model('Note', noteSchema);
+
+
+```
+
+### CRUD con mongoose
+
+Para poder manejar esto, primero se debe generar una instancia del modelo definido para el Documento:
+
+```js
+const Note = mongoose.model('Note', noteSchema);
+```
+
+Sin embargo, se recomienda definir la conexión con mongo en un archivo separado, exportar el modelo:
+
+```js
+module.exports = mongoose.model('Note', noteSchema);
+```
+
+e importarlo en donde se implementarán los endpoints:
+
+```js
+const Note = require('./models/note')
+```
+
+Con el modelo definido, se puede instanciar para su uso.
+
+#### Obtención de varios
+
+```js
+app.get('/api/notes', (request, response, next) => {
+    Note
+        .find({})
+        .then(notes => {
+            if (notes) {
+                response.json(notes)
+            } else {
+                response.status(404).end()
+            }
+        })
+        .catch(error => next(error))
+})
+
+```
+
+#### Obtención de uno
+
+```js
+app.get('/api/notes/:id', (request, response, next) => {
+    Note
+        .findById(request.params.id)
+        .then(noteObtained => {
+            if (noteObtained) {
+                response.json(noteObtained)
+            } else {
+                response.status(404).end()
+            }
+        })
+        .catch(error => next(error))
+})
+```
+
+#### Creación
+
+```js
+app.post('/api/notes', (request, response, next) => {
+    const body = request.body
+
+    if (!body.content) {
+        return response.status(400).json({
+            error: 'content missing'
+        })
+    }
+
+    const newNote = new Note({
+        content: body.content,
+        important: Boolean(body.important) || false,
+    })
+
+    newNote
+        .save()
+        .then(savedNote => response.json(savedNote))
+        .catch(error => next(error))
+})
+```
+
+#### Actualización
+
+```js
+app.put('/api/notes/:id', (request, response, next) => {
+    const body = request.body;
+
+    // Se genera un objeto plano con el nuevo contenido de la nota.
+    // NO SE USA una nueva instancia de Note para esto.
+    const note = {
+        content: body.content,
+        important: body.important
+    }
+
+    // Requiere id Documento, nuevos valores a modificar, opciones.
+    // Las opciones new=true, indican que el resultado de la operacion retornará la nota actualizada.
+    Note
+        .findByIdAndUpdate(request.params.id, note, { new: true })
+        .then(updatedNote => { response.json(updatedNote) })
+        .catch(error => next(error))
+})
+
+
+```
+
+#### Borrado
+
+```js
+app.delete('/api/notes/:id', (request, response, next) => {
+    Note
+        .findByIdAndDelete(request.params.id)
+        .then(result => { response.status(204).end() })
+        .catch(error => next(error))
+})
+```
+
+## Variables de entorno
+
+Para la conexión de BD, es necesario que la URL de conexión esté guardada de forma separada y que __no__ sea respaldada en github.
+
+Es por ello que se definen archivos *.env* para guardar esta información, en el formato siguiente:
+
+```env
+VARIABLE=VALOR_ASOCIADO
+```
+
+Para su acceso dentro de la aplicación, se debe usar el package `dotenv` (npm i dotenv).
+Al inicio del archivo principal (index.js) de la aplicación se importa la función `config`.
+
+Luego, se hace la referencia en una constante usando `process.env`. Por ej. para la variable MONGODB_URI
+
+```js
+require('dotenv').config()
+
+const url = process.env.MONGODB_URI
+
+```
+
+Esto aplica para cualquier valor externo a la aplicación y que debe estar fuera del código fuente.
+
+## Manejo de errores
+
+En express es posible definir middlewares de errores, los cuales son invocados desde cualquier endpoint usando la función next() y pasando el objeto de error como parámetro. La función next, se debe agregar como parámetro a cada endpoint.
+
+El middleware en sí, debe estar incluido en el código, luego de la definición de TODOS los endpoints, es decir, al final del archivo, justo antes de la función que levanta la aplicación (función `listen`).
+
+```js
+app.get('/api/notes/:id', (request, response, next) => {
+    Note
+        .findById(request.params.id)
+        .then(noteObtained => {
+            if (noteObtained) {
+                response.json(noteObtained)
+            } else {
+                response.status(404).end()
+            }
+        })
+        .catch(error => next(error))
+})
+
+    .
+    .
+    .
+    .
+    .
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+
+    /* Si no se encuentra alguna error específico, se maneja el error por el controlador de errores de Express.*/
+    next(error)
+}
+
+app.use(errorHandler)
+
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+})
+
+```
