@@ -803,17 +803,24 @@ app.post('/api/notes', (request, response, next) => {
 app.put('/api/notes/:id', (request, response, next) => {
     const body = request.body;
 
-    // Se genera un objeto plano con el nuevo contenido de la nota.
-    // NO SE USA una nueva instancia de Note para esto.
+    /*
+    * Se genera un objeto plano con el nuevo contenido de la nota.
+    * NO SE USA una nueva instancia de Note para esto.
+    * Requiere:
+    *   id Documento,
+    *   nuevos valores a modificar
+    *   opciones:
+    *       new: true,           indica que el resultado de la operacion retornará la nota actualizada.
+    *       runValidators: true, indica que se utilizará las validaciones definidas en el Schema
+    *       context: 'query',    permite indicar que el contexto de la validacion afecta solo a esta operación.
+    */
     const note = {
         content: body.content,
         important: body.important
     }
 
-    // Requiere id Documento, nuevos valores a modificar, opciones.
-    // Las opciones new=true, indican que el resultado de la operacion retornará la nota actualizada.
     Note
-        .findByIdAndUpdate(request.params.id, note, { new: true })
+        .findByIdAndUpdate(request.params.id, note, { new: true, runValidators: true, context: 'query' })
         .then(updatedNote => { response.json(updatedNote) })
         .catch(error => next(error))
 })
@@ -862,6 +869,13 @@ En express es posible definir middlewares de errores, los cuales son invocados d
 
 El middleware en sí, debe estar incluido en el código, luego de la definición de TODOS los endpoints, es decir, al final del archivo, justo antes de la función que levanta la aplicación (función `listen`).
 
+Ademas, debe tener estos 4 parametros, los cuales deben ser ordenados de la manera presentada, para ser identificado como un middleware de errores:
+
+- error
+- request
+- response
+- next
+
 ```js
 app.get('/api/notes/:id', (request, response, next) => {
     Note
@@ -902,3 +916,48 @@ app.listen(PORT, () => {
 })
 
 ```
+
+## Validaciones en Mongoose
+
+Las validaciones en Mongoose, se definen como parte del esquema. Existen validaciones integradas y personalizadas.
+
+Las primeras solo se deben referenciar con su nombre y valor, como por ej. `required` o `minLength`.
+
+Las últimas corresponden a funciones personalizadas, las cuales también tienen mensajes personalizados, se agregan como parte de la clave `validate` como un objeto compuesto de las propiedades `validator` y `message`, que contendrán las función validadora y el mensaje, respectivamente.
+
+```js
+const personSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        minLength: 3,
+        required: [true, 'Name required'],
+    },
+    number: {
+        type: String,
+        minLength: 8,
+        required: [true, 'Phone number required'],
+        validate: {
+            validator: (value) => /^\d{2,3}\-\d{5,}$/.test(value),
+            message: (props) => `Phone number '${props.value}' is not valid. It must be 'xx-xxxxx' or 'xxx-xxxxx'`
+        }
+    },
+})
+```
+
+## Lint
+
+Consiste en una herramienta de análisis estático de software que detecta y marca errores de sintaxis, uso y estilo del código.
+Ayuda a detectar errores de forma temprana en el código, antes de que se lleven a la ejecución y permite mantener una consistencia en la definición de los elementos que componen el código, por ej. la cantidad de espacio usado para separar las líneas de una función u objeto, el uso de punto y coma para las sentencias, entre muchas otras definiciones.
+
+En el caso de JS, se usa __ESlint__. Para ello se instala como una dependencia de desarrollo y luego se inicializa en el proyecto.
+
+```sh
+npm install eslint --save-dev
+npm install --save-dev @stylistic/eslint-plugin-js
+npx eslint --init
+```
+
+El paquete `stylistic` aplica una serie de reglas que permiten mantener la consistencia del estilo del código.
+Este ultimo comando (`npx eslint`) genera un archivo `eslint.config.js`, en el que se indican todas las reglas que se aplicarán en el código del proyecto.
+
+Las reglas a usar en el archivo obtenido se pueden obtener desde [aqui](<https://eslint.org/docs/latest/rules/>) en el caso de las *normales* y para las *stylistics* [aquí] (<https://eslint.style/packages/js>)
