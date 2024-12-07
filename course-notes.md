@@ -1,6 +1,6 @@
-# Notas de Curso de React
+# Notas de Curso FullStack
 
-## Part 1 - Introducción a React
+## Part 1 - *Introducción* a React
 
 ### Creacion de app
 
@@ -15,7 +15,7 @@ npm create vite@latest part1 --template react
 npm 7+ (el doble guion adicional es necesario):
 
 ```command
-npm create vite@latest part1 -- --template react
+npm create vite@latest part1 -- *--*template react
 ```
 
 ### Componentes
@@ -28,21 +28,21 @@ const Button = ({ onSmash, text }) => (
 );
 ```
 
-- Deben definirse con mayúscula inicial. Esto también aplica si son definidos como un archivo separado, el cual debe nombrarse igual.
-- Deben retornar un HTML válido que tenga etiquetas de apertura y cierre, como __div__.
-- Si no es así, el componente completo se debe rodear de una etiqueta vacía:
+- *Deben* definirse con mayúscula inicial. Esto también aplica si son definidos como un archivo separado, el cual debe nombrarse igual.
+- *Deben* retornar un HTML válido que tenga etiquetas de apertura y cierre, como __div__.
+- *Si* no es así, el componente completo se debe rodear de una etiqueta vacía:
 
 ```jsx
 <></>
 ```
 
-- Además, dentro del HTML en que se llamará a ese componente, debe renderizarse como un componente autocerrado:
+- *Además*, dentro del HTML en que se llamará a ese componente, debe renderizarse como un componente autocerrado:
 
 ```jsx
 <History allClicks={allClicks} />
 ```
 
-- Deben estar definidas como una función independiente, es decir, *__NO deben definirse__* dentro de otro componente. El siguiente ejemplo es UN ERROR.
+- *Deben* estar definidas como una función independiente, es decir, *__NO deben definirse__* dentro de otro componente. El siguiente ejemplo es UN ERROR.
 
 ```jsx
     /* NO DEFINAS COMPONENTES DENTRO DE OTRO COMPONENTE */
@@ -69,7 +69,7 @@ const Button = ({ onSmash, text }) => (
 
 ```
 
-- Las funciones usadas al llamar a un componente, deben ser la referencia de la misma, es decir solo su nombre. Por ejemplo:
+- *Las* funciones usadas al llamar a un componente, deben ser la referencia de la misma, es decir solo su nombre. Por ejemplo:
 
 ```jsx
 <Button handleClick={clickIncrement} text="increment" />
@@ -183,9 +183,9 @@ También, como parte de buenas prácticas se recomienda definir componentes pequ
 
 ### Consideraciones generales con los hooks (Funciones React que inician con "use")
 
-- NO se deben llamar dentro de loops, ifs o subfunciones. Solo se deben llamar desde dentro de la función que define un componente de React.
-- En caso de tener que manejar varios estados, deben privilegiarse su manejo de forma separada.
-- Se requiere generar SIEMPRE copias de la información antes de guardarla como datos. Las actualizaciones de valores ocurren de forma asíncrona, por lo que el valor de una variable no puede ser modificado directamente, sino que se debe usar una variable separada que tenga el valor actualizado y luego ese usar para generar la modificación a través de la función asociada al generar el useState.
+- *NO* se deben llamar dentro de loops, ifs o subfunciones. Solo se deben llamar desde dentro de la función que define un componente de React.
+- *En* caso de tener que manejar varios estados, deben privilegiarse su manejo de forma separada.
+- *Se* requiere generar SIEMPRE copias de la información antes de guardarla como datos. Las actualizaciones de valores ocurren de forma asíncrona, por lo que el valor de una variable no puede ser modificado directamente, sino que se debe usar una variable separada que tenga el valor actualizado y luego ese usar para generar la modificación a través de la función asociada al generar el useState.
 Por ejemplo, en el fragmento siguiente se genera la variable *updatedLeft* para ello.
 
 ```jsx
@@ -287,7 +287,7 @@ const App = () => {
 
 _________________________________________________________________________________________________________________________
 
-## Part 2 - Comunicandose con el servidor
+## Part 2 - *Comunicandose* con el servidor
 
 ### Renderizado de múltiples elementos
 
@@ -373,7 +373,7 @@ export default {
 
 ### Estilos en React
 
-- De forma separada:
+- *De* forma separada:
 
     La forma más ordenada de realizarlo es a través de archivos independientes que contengan las reglas.
     Luego, se importan en la aplicación directamente por nombre.
@@ -382,7 +382,7 @@ export default {
     import './index.css'
     ```
 
-- En linea:
+- *En* linea:
 
     Para ello se deben enviar las reglas CSS al componente como un objeto JS.
     Se deben modificar los nombres de cada estilo para que se adapten a camelCase, en lugar de kebab-case (uso de guiones para separación) usado en CSS.
@@ -423,7 +423,7 @@ export default {
         )
     ```
 
-## Part 3 - Programando un servidor con NodeJS y Express
+## Part 3 - *Programando* un servidor con NodeJS y Express
 
 ### Express
 
@@ -536,9 +536,9 @@ Son funciones usadas para manejar objetos de request (datos de la solicitud HTTP
 
 Reciben 3 parámetros:
 
-- request: Datos de la solicitud enviada al endpoint
-- response: Datos a usar para la respuesta
-- next: Función que pasa el control al siguiente Middleware.
+- *request*: Datos de la solicitud enviada al endpoint
+- *response*: Datos a usar para la respuesta
+- *next*: Función que pasa el control al siguiente Middleware.
 
 Ejemplo:
 
@@ -567,7 +567,18 @@ En la práctica, puedes utilizar varios middleware al mismo tiempo. Cuando tiene
 
  Pueden ser invocados antes o después de los controladores de rutas de acceso. Lo primero es lo común, ya que la idea es que hagan gestiones en los datos ANTES que la información llegue al controlador. Usarlos después es, por ejemplo, para poder manejar una solicitud que no se encuentre dentro de los controladores de ruta definidos.
 
-## CORS (Cross Origin Resource Sharing)
+```js
+
+/* Middleware para el manejo de endpoints no definidos */
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+
+```
+
+### CORS (Cross Origin Resource Sharing)
 
 Parte de la implementación del protocolo HTTP dentro de los navegadores es permitir solo conexiones del mismo origen. En este caso, origen se refiere al conjunto de protocolo, host y puerto.
 
@@ -598,7 +609,7 @@ const app = express()
 app.use(cors())
 ```
 
-## Archivos Estáticos
+### Archivos Estáticos
 
 Express tiene la capacidad de responder a requests que necesiten archivos físicos. Esto permite levantar el __frontend__ desde el mismo servidor de backend.
 
@@ -616,7 +627,7 @@ Luego, en el __backend__ se debe agregar un nuevo middleware de Express llamado 
 app.use(express.static('dist'))
 ```
 
-## Proxy
+### Proxy
 
 Como en este caso, el servidor frontend espera que la comunicación se realice por el puerto 5173 para obtener los recursos necesarios para poder obtener los datos que renderiza. Por tanto, como el backend responde en el puerto 3001, se debe indicar esa situación para que así Vite redirija las solicitudes a la ruta *api* hacia el puerto correcto.
 
@@ -637,7 +648,7 @@ export default defineConfig({
 
 ```
 
-## Despliegue de la app a internet
+### Despliegue de la app a internet
 
 Se usa un servicio cloud como fly.io
 
@@ -654,17 +665,17 @@ fly logs (Revisar los logs del servicio)
 fly scale count 1 (Para disminuir a 1 la cantidad de máquinas generadas por el despliegue)
 ```
 
-## Depurar aplicaciones
+### Depurar aplicaciones
 
-### Frontend
+#### Frontend
 
 Uso de la sentencia `debugger;` en cualquier punto del código, pausará la ejecución y permitirá revisar el estado y valor de las variables de la aplicación en ese momento.
 
-### Backend
+#### Backend
 
 Uso del comando `node --inspect file.js` o `nodemon --inspect file.js` para permitir la misma revisión que con debugger.
 
-## Uso de MongoDB como repositorio de datos
+### Uso de MongoDB como repositorio de datos
 
 En MongoDB, los datos se guardan de forma no relacional identificados por un campo unico (_id) en Documents. Los Documentos pueden contener cualquier valor, asociado a una clave en una estructura similar a un objeto JS.
 
@@ -716,7 +727,7 @@ module.exports = mongoose.model('Note', noteSchema);
 
 ```
 
-### CRUD con mongoose
+#### CRUD con mongoose
 
 Para poder manejar esto, primero se debe generar una instancia del modelo definido para el Documento:
 
@@ -738,7 +749,7 @@ const Note = require('./models/note')
 
 Con el modelo definido, se puede instanciar para su uso.
 
-#### Obtención de varios
+##### Obtención de varios
 
 ```js
 app.get('/api/notes', (request, response, next) => {
@@ -756,7 +767,7 @@ app.get('/api/notes', (request, response, next) => {
 
 ```
 
-#### Obtención de uno
+##### Obtención de uno
 
 ```js
 app.get('/api/notes/:id', (request, response, next) => {
@@ -773,7 +784,7 @@ app.get('/api/notes/:id', (request, response, next) => {
 })
 ```
 
-#### Creación
+##### Creación
 
 ```js
 app.post('/api/notes', (request, response, next) => {
@@ -797,7 +808,7 @@ app.post('/api/notes', (request, response, next) => {
 })
 ```
 
-#### Actualización
+##### Actualización
 
 ```js
 app.put('/api/notes/:id', (request, response, next) => {
@@ -828,7 +839,7 @@ app.put('/api/notes/:id', (request, response, next) => {
 
 ```
 
-#### Borrado
+##### Borrado
 
 ```js
 app.delete('/api/notes/:id', (request, response, next) => {
@@ -839,7 +850,7 @@ app.delete('/api/notes/:id', (request, response, next) => {
 })
 ```
 
-## Variables de entorno
+### Variables de entorno
 
 Para la conexión de BD, es necesario que la URL de conexión esté guardada de forma separada y que __no__ sea respaldada en github.
 
@@ -863,7 +874,7 @@ const url = process.env.MONGODB_URI
 
 Esto aplica para cualquier valor externo a la aplicación y que debe estar fuera del código fuente.
 
-## Manejo de errores
+### Manejo de errores en Express
 
 En express es posible definir middlewares de errores, los cuales son invocados desde cualquier endpoint usando la función next() y pasando el objeto de error como parámetro. La función next, se debe agregar como parámetro a cada endpoint.
 
@@ -871,10 +882,10 @@ El middleware en sí, debe estar incluido en el código, luego de la definición
 
 Ademas, debe tener estos 4 parametros, los cuales deben ser ordenados de la manera presentada, para ser identificado como un middleware de errores:
 
-- error
-- request
-- response
-- next
+- *error*
+- *request*
+- *response*
+- *next*
 
 ```js
 app.get('/api/notes/:id', (request, response, next) => {
@@ -917,7 +928,7 @@ app.listen(PORT, () => {
 
 ```
 
-## Validaciones en Mongoose
+### Validaciones en Mongoose
 
 Las validaciones en Mongoose, se definen como parte del esquema. Existen validaciones integradas y personalizadas.
 
@@ -944,7 +955,7 @@ const personSchema = new mongoose.Schema({
 })
 ```
 
-## Lint
+### Lint
 
 Consiste en una herramienta de análisis estático de software que detecta y marca errores de sintaxis, uso y estilo del código.
 Ayuda a detectar errores de forma temprana en el código, antes de que se lleven a la ejecución y permite mantener una consistencia en la definición de los elementos que componen el código, por ej. la cantidad de espacio usado para separar las líneas de una función u objeto, el uso de punto y coma para las sentencias, entre muchas otras definiciones.
@@ -952,12 +963,210 @@ Ayuda a detectar errores de forma temprana en el código, antes de que se lleven
 En el caso de JS, se usa __ESlint__. Para ello se instala como una dependencia de desarrollo y luego se inicializa en el proyecto.
 
 ```sh
-npm install eslint --save-dev
-npm install --save-dev @stylistic/eslint-plugin-js
+npm install --save-dev eslint @stylistic/eslint-plugin-js
 npx eslint --init
 ```
 
 El paquete `stylistic` aplica una serie de reglas que permiten mantener la consistencia del estilo del código.
-Este ultimo comando (`npx eslint`) genera un archivo `eslint.config.js`, en el que se indican todas las reglas que se aplicarán en el código del proyecto.
+Este ultimo comando (`npx eslint --init`) genera un archivo `eslint.config.js`, en el que se indican todas las reglas que se aplicarán en el código del proyecto.
 
-Las reglas a usar en el archivo obtenido se pueden obtener desde [aqui](<https://eslint.org/docs/latest/rules/>) en el caso de las *normales* y para las *stylistics* [aquí] (<https://eslint.style/packages/js>)
+Las reglas a usar en el archivo obtenido se pueden obtener desde [aqui](<https://eslint.org/docs/latest/rules/>) en el caso de las *normales* y para las *stylistics* [aquí](<https://eslint.style/packages/js>)
+
+## Part 4 - *Probando* servidores Express, administración de usuarios
+
+### Estructura del proyecto backend
+
+La forma de organizar los archivos considera la siguiente estructura propuesta, la cual se encuentra basada en las mejores prácticas definidas para backends desarrollados usando Express:
+
+```md
+├── index.js
+├── app.js
+├── dist
+│   └── ...
+├── controllers
+│   └── notes.js
+├── models
+│   └── note.js
+├── package-lock.json
+├── package.json
+├── utils
+│   ├── config.js
+│   ├── logger.js
+│   └── middleware.js
+```
+
+Descripción de cada punto:
+
+- *index.js*: Contiene el punto de acceso e inicio de la aplicación
+- *app.js*: Contiene las definiciones de middlewares, inicio de la conexión de BD e importaciones necesarias para generar la aplicación Express
+- __*dist*__: Contiene los archivos del frontend
+- __*controllers*__: Contiene los endpoints (Routes) definidos para notes (GET,POST,PUT,DELETE)
+- __*models*__: Contiene la definiciones de mongoose para note, definiendo el Schema y Model asociado.
+- __*utils*__: Contiene las utilidades generales usadas en el proyecto:
+  - *config.js* : el archivo de configuracion de variables de entorno
+  - *logger.js* : el archivo que maneja la generación de logs
+  - *middleware.js* : el archivo de los middlewares definidos para el uso general de la app:
+    - acceso para endpoints desconocidos
+    - gestor de errores
+    - generación de info con detalles cuando se invocan los diferentes endpoints.
+- *package.json* y *package-lock.json*: Contienen las definiciones de los comandos usados para el manejo de la aplicación y las dependencias del proyecto.
+- *eslint.config.mjs*: Contiene las reglas usadas en el proyecto para eslint.
+
+### Routers
+
+Para modularizar el código, se generó dentro de *controllers* el archivo `notes.js`, que contiene una instancia de `Router` para poder definir los endpoints de notes.
+
+```js
+const notesRouter = require('express').Router()
+const Note = require('../models/note')
+
+notesRouter.get('/', (request, response, next) => { ... } )
+notesRouter.post('/', (request, response, next) => { ... } )
+notesRouter.delete('/:id', (request, response, next) => { ... } )
+notesRouter.put('/:id', (request, response, next) => { ... } )
+
+```
+
+Este Router corresponde a una "mini-app" que permite realizar el enrutamiento y también la inclusión de middlewares en cada acceso. El Router generado es, a su vez, un middleware, lo cual permite incluirlo en la app a través de la función `use()`:
+
+```js
+const notesRouter = require('./controllers/notes')
+
+const app = express()
+.
+.
+.
+app.use('/api/notes', notesRouter)
+```
+
+Al invocarlo desde la app, se indica a que dirección responderá el Router y siempre que se acceda a `/api/notes` el router responderá según el método utilizado. Es por ello que en cada método del Router, se define una ruta "vacía" ("/"), ya que la ruta se define una sola vez en `app.js`
+
+Por tanto, esta forma de definirlo permite hacer que cada módulo (archivo js) maneje un conjunto de rutas relacionadas. Así, se requiere generar una nueva ruta, se puede generar un nuevo "controller", el cual contenga la lógica asociada.
+
+### Formas de Exportación / Importación de Módulos
+
+Para exportar funcionalidades desde cada archivo, se debe tener en cuenta, la cantidad de elementos a exportar, ya que de eso depende la forma más optima de hacerlo.
+
+#### Exportación
+
+En caso de que sean unas cuantas funciones, es posible utilizar un objeto JS para hacerlo. Por ej.:
+
+```js
+const info = (...params) => {
+  console.log(...params)
+}
+
+const error = (...params) => {
+  console.error(...params)
+}
+
+module.exports = {
+  info, error
+}
+```
+
+Sin embargo, si es un solo elemento, lo más sencillo es igualar los exports a ese elemento:
+
+```js
+const notesRouter = require('express').Router()
+const Note = require('../models/note')
+
+// ...
+
+module.exports = notesRouter
+```
+
+#### Importación
+
+Para importarlos, en el primer caso, se debe desestructurar el objeto...
+
+```js
+const { info, error } = require('./utils/logger')
+
+info('message')
+error('error message')
+```
+
+... o usar con sintaxis de acceso a objetos.
+
+```js
+const logger = require('./utils/logger')
+
+logger.info('message')
+
+logger.error('error message')
+```
+
+En el segundo caso, se deben importar a una variable directamente:
+
+```js
+const notesRouter = require('./controllers/notes')
+
+// ...
+
+app.use('/api/notes', notesRouter)
+```
+
+### Test de aplicaiones en Node
+
+Existe una librería interna de Node `node:test`, la cual puede configurarse para realizar tests unitarios. Viene integrada con Node por lo que no requiere instalaciones adicionales.
+
+#### Configuración
+
+Modificar el script `test` en `package.json` a
+
+```json
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "node --test",
+  }
+```
+
+Luego, se deben generar archivos con extensión `.test.js` para que sean detectados por el script y ejecuten las condiciones de prueba definidas.
+
+Al usar el comando, se aplican todas las pruebas definidas en los archivos con extensión `.test.js`.
+
+Ejemplo:
+
+Basado en esta función:
+
+```js
+const average = (array) => {
+  const reducer = (sum, item) => {
+    return sum + item
+  }
+
+  return array.length === 0 ? 0 : array.reduce(reducer, 0) / array.length
+}
+```
+
+Se genera las siguientes pruebas:
+
+```js
+const { test, describe } = require('node:test')
+const assert = require('node:assert')
+
+const average = require('../utils/for_testing').average
+
+describe('average', () => {
+  test('of one value is the value itself', () => {
+    assert.strictEqual(average([1]), 1)
+  })
+
+  test('of many is calculated right', () => {
+    assert.strictEqual(average([1, 2, 3, 4, 5, 6]), 3.5)
+  })
+
+  test('of empty array is zero', () => {
+    assert.strictEqual(average([]), 0)
+  })
+})
+
+```
+
+En el script se importan tanto `node:test` como `node:assert`.
+
+El primero para poder definir el test y luego usar *assert* para aplicar condiciones a un set de datos. Con las pruebas mostradas se espera encontrarse una igualdad por tipo y valor (===).
+
+La función es ejecutada de forma directa, para comparar el resultado obtenido con el esperado.
