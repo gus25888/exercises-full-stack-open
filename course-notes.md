@@ -1107,9 +1107,9 @@ const notesRouter = require('./controllers/notes')
 app.use('/api/notes', notesRouter)
 ```
 
-### Test de aplicaiones en Node
+### Test unitario de aplicaciones en Node
 
-Existe una librería interna de Node `node:test`, la cual puede configurarse para realizar tests unitarios. Viene integrada con Node por lo que no requiere instalaciones adicionales.
+Existe una librería interna de Node `node:test`, la cual puede configurarse para realizar __tests unitarios__. Viene integrada con Node por lo que no requiere instalaciones adicionales.
 
 #### Configuración
 
@@ -1170,3 +1170,316 @@ En el script se importan tanto `node:test` como `node:assert`.
 El primero para poder definir el test y luego usar *assert* para aplicar condiciones a un set de datos. Con las pruebas mostradas se espera encontrarse una igualdad por tipo y valor (===).
 
 La función es ejecutada de forma directa, para comparar el resultado obtenido con el esperado.
+
+Así, se puede ver que la prueba se define con la función `test`, la cual recibe dos parámetros: la descripción de lo que se va a probar, que es un string; y la función anónima que permite definir el código del que se compondrá la prueba. Normalmente, en este caso, se usa la función `assert` para ello.
+
+Además, `describe` definida de la misma forma que `test`, permite realizar la agrupación por función de todas las pruebas a realizar.
+
+##### Definición de ambientes distintos
+
+Como parte de las definiciones necesarias para poder separar las condiciones que se requieren para pruebas se usa la variable de entorno `NODE_ENV`.
+
+Se le debe asignar el valor *development*, *test* o *production* para los ambientes de __desarrollo__, __pruebas__ o __producción__, respectivamente.
+
+Esto se implementa como parte de los scripts del proyecto en el `package.json`:
+
+```json
+{
+  "name": "notes-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=production node index.js",
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
+    "test": "cross-env NODE_ENV=test node --test",
+    .
+    .
+    .
+  }
+}
+```
+
+Adicionalmente, se instala el package `cross-env` (`npm i cross-env --save-dev`), como una dependencia de desarrollo para evitar los conflictos que genera la definicion de variables de entorno en Windows.
+
+Con ello, es posible definir diferentes direcciones a las que apuntar a la base de datos, para NO afectar a los datos productivos mientras se realizan pruebas. Así, modificando el archivo `.env`...
+
+```.env
+MONGODB_URI=mongodb+srv://
+PORT=3001
+
+TEST_MONGODB_URI=mongodb+srv://
+```
+
+y el archivo `utils/config.js`:
+
+```js
+require('dotenv').config()
+
+const PORT = process.env.PORT
+const MONGODB_URI = process.env.NODE_ENV === 'test'
+  ? process.env.TEST_MONGODB_URI
+  : process.env.MONGODB_URI
+```
+
+> __NOTA__: Se debe considerar que esta forma implementar la configuración de las variables de entorno para su uso dentro de los proyectos es similar a la utilizada (y recomendada) librería [`node-config`](https://github.com/node-config/node-config)
+
+### Test de integración de aplicaciones en Node: Uso de Supertest
+
+Se instala como una dependencia de desarrollo:
+
+```sh
+npm i supertest --save-dev
+```
+
+Este paquete permite generar la instancia de la aplicación Express, sin preocuparse de elegir el puerto a usar, ya que se usan puertos "internos" para el funcionamiento de la prueba solamente.
+
+```js
+const { test, after, beforeEach } = require('node:test')
+const assert = require('node:assert')
+const mongoose = require('mongoose')
+const supertest = require('supertest')
+
+const Note = require('../models/note')
+const app = require('../app')
+const api = supertest(app)
+
+
+const initialNotes = [
+  {
+    content: 'HTML is easy',
+    important: false,
+  },
+  {
+    content: 'Browser can execute only JavaScript',
+    important: true,
+  },
+]
+
+// Funcion que se ejecuta antes de cada prueba realizada.
+beforeEach(async () => {
+  await Note.deleteMany({})
+  let noteObject = new Note(initialNotes[0])
+  await noteObject.save()
+  noteObject = new Note(initialNotes[1])
+  await noteObject.save()
+})
+
+test('notes are returned as json', async () => {
+  await api
+    .get('/api/notes')
+    // Espera un código de exito
+    .expect(200)
+    /*
+      * En este punto se espera recibir un texto que contenga un 'application/json'.
+      * Se valida con un regex, debido a que la response contendrá,
+      *  probablemente, otros caracteres extra.
+     */
+    .expect('Content-Type', /application\/json/)
+})
+
+// Se ejecuta al finalizar todos los tests
+after(async () => {
+  await mongoose.connection.close()
+})
+```
+
+La función `beforeEach` permite generar acciones para asegurar que la base de datos se encuentre en el mismo estado para todos los tests que se realicen.
+
+La función `after` permite
+
+### Elegir los tests a aplicar
+
+Independientemente, del tipo de test a realizar es posible omitirlos del conjunto de pruebas, ya que al usar el comando `npm test` se ejecutan todos los archivos terminados en `.test.js`.
+
+- Forma 1:
+
+    Agregar la función `only` a la prueba (test()) o a la suite (describe())::
+
+    ```js
+    test.only('notes are returned as json', async () => {
+        await api
+            .get('/api/notes')
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+    })
+
+    test.only('there are two notes', async () => {
+        const response = await api.get('/api/notes')
+
+        assert.strictEqual(response.body.length, 2)
+    })
+    ```
+
+    y luego ejecutarlas con el comando `npm test -- --test-only`.
+
+    Sin embargo, __NO__ se recomienda debido a que puede olvidarse quitarlas del código.
+
+- Forma 2:
+
+    Agregar la opción 'skip:true' a la prueba o a la suite:
+
+    ```js
+    describe('reverse', { skip: true }, () => {
+        test('reverse of a', () => {
+            const result = reverse('a')
+
+            assert.strictEqual(result, 'a')
+        })
+    })
+    ```
+
+    que tiene el mismo problema que la Forma 1.
+
+- Forma 3:
+
+    Indicar en el comando a ejecutar los tests (o suites) que se desean ejecutar:
+
+    ```sh
+        #Por ruta relativa
+        npm test -- tests/note_api.test.js
+        #Por patrón de nombre
+        npm test -- --test-name-pattern="the first note is about HTTP methods"
+        npm run test -- --test-name-pattern="notes"
+    ```
+
+    > IMPORTANTE: Los dos guiones despues de `test` indican que es el final de las opciones a enviar a node, y que el resto de los argumentos del comando serán enviados al script como tal.
+
+### async / await
+
+Es la forma recomendada de tratar con promesas. En lugar de usar la función `then()` de forma encadenada, se agrega `await` antes de la llamada a alguna función que retornará una promesa.
+
+Se debe considerar que el uso de `await`, debe realizarse dentro de una función asíncrona, lo cual se denota con `async` antes de la función.
+
+```js
+const main = async () => {
+  const notes = await Note.find({})
+  console.log('operation returned the following notes', notes)
+
+  const response = await notes[0].remove()
+  console.log('the first note is removed')
+}
+```
+
+#### Manejo de errores con async/await
+
+Para ello, simplemente se debe agregar secciones `try/catch` en los puntos del código en que pueden ocurrir errores. El middleware de manejo de errores, se llama desde la bloque `catch`
+
+```js
+notesRouter.post('/', async (request, response, next) => {
+  const body = request.body
+
+  const newNote = new Note({
+    content: body.content,
+    important: Boolean(body.important) || false,
+  })
+
+  try {
+    const savedNote = await newNote.save()
+
+    response.status(201).json(savedNote)
+  } catch (exception) {
+    next(exception)
+  }
+
+})
+```
+
+##### Omisión de bloques `try/catch`
+
+Considerando que la estructura seguida por los endpoints que usan funciones que requieren `try/catch`, se genera una cantidad de código repetido debido a la misma estructura generada:
+
+```js
+  try {
+    // Código...
+  } catch (exception) {
+    next(exception)
+  }
+```
+
+Para ello existe una librería llamada __express-async-errors__ (`npm install express-async-errors`) que permite "omitir" esas declaraciones, manejando las excepciones por debajo y enviandolas automáticamente al middleware de errores.
+
+Se usa dentro de la definición principal de la aplicación, importandola __ANTES__ que las rutas (Routes):
+
+```js
+const cors = require('cors')
+const express = require('express')
+const mongoose = require('mongoose')
+require('express-async-errors')
+
+const config = require('./utils/config')
+const logger = require('./utils/logger')
+const middleware = require('./utils/middleware')
+
+const notesRouter = require('./controllers/notes')
+
+const app = express()
+
+```
+
+Así, se pasa de esto:
+
+```js
+notesRouter.delete('/:id', async (request, response, next) => {
+  try {
+    await Note.findByIdAndDelete(request.params.id)
+    response.status(204).end()
+  } catch (exception) {
+    next(exception)
+  }
+})
+```
+
+a esto:
+
+```js
+notesRouter.delete('/:id', async (request, response) => {
+  await Note.findByIdAndDelete(request.params.id)
+  response.status(204).end()
+})
+```
+
+#### Uso de async / await para múltiples registros
+
+Para iniciar el proceso de las pruebas, se requiere borrar y luego cargar una lista de valores, lo cual usando promesas puede llevar a resultados inesperados, ya que las asincronía de los procesos, podría llevar a que se inicien las pruebas sin cargar los valores antes.
+
+Por ello, se hace uso de `Promise.all()`, lo cual permite ejecutar un array de promesas de forma paralela. Así, se puede pasar de esto:
+
+```js
+  beforeEach(async () => {
+    await Note.deleteMany({})
+
+    let noteObject = new Note(helper.initialNotes[0])
+    await noteObject.save()
+    noteObject = new Note(helper.initialNotes[1])
+    await noteObject.save()
+  })
+
+```
+
+a esto:
+
+```js
+  beforeEach(async () => {
+    await Note.deleteMany({})
+
+    // Se generan un array con las notas a crear
+    const noteObjects = helper.initialNotes.map(note => new Note(note))
+    // Se genera un array con promesas de la creación de cada nota.
+    const promiseArray = noteObjects.map(note => note.save())
+    // Se espera a que todas se cumplan para continuar.
+    await Promise.all(promiseArray)
+  })
+```
+
+En caso de ser necesario un orden específico para las ejecución de las promesas, se debería usar `for...of`:
+
+```js
+beforeEach(async () => {
+  await Note.deleteMany({})
+
+  for (let note of helper.initialNotes) {
+    let noteObject = new Note(note)
+    await noteObject.save()
+  }
+})
+```
