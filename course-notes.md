@@ -1483,3 +1483,269 @@ beforeEach(async () => {
   }
 })
 ```
+
+### Gestión de usuarios
+
+En Mongo, ya que es una BD no relacional, no existe un mecanismo definido para relacionar los usuarios con los elementos que creen en la aplicación. En caso del ejemplo de la app de Notas, lo que se implementa es registrar la relación en ambas entidades: el Schema de Notes, tiene el usuario que lo creó:
+
+```js
+const noteSchema = new mongoose.Schema({
+  content: {
+    type: String,
+    required: true,
+    minlength: 5
+  },
+  important: Boolean,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
+})
+```
+
+A su vez, el Schema de User, contiene el listado de todas las notas que fueron creadas por el:
+
+```js
+const userSchema = new mongoose.Schema({
+  username: String,
+  name: String,
+  passwordHash: String,
+  notes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Note'
+    }
+  ],
+})
+```
+
+Para el manejo de las passwords de forma segura, se debe guardar el hash de la misma. Para ello, se utiliza el paquete bcrypt (`npm i bcrypt`), el cual implementa el algoritmo [bcrypt](https://en.wikipedia.org/wiki/Bcrypt), que es considerado el estándar para esto.
+
+#### Uso de bcrypt
+
+bcrypt se usa en el endpoint requerido para poder guardar los nuevos usuarios:
+
+```js
+const bcrypt = require('bcrypt')
+const usersRouter = require('express').Router()
+const User = require('../models/user')
+
+
+usersRouter.get('/', async (request, response) => {
+  const users = await User.find({}).populate('notes', { content: 1, important: 1 })
+  response.json(users)
+})
+
+
+usersRouter.post('/', async (request, response) => {
+  const { username, name, password } = request.body
+
+  const saltRounds = 10
+  const passwordHash = await bcrypt.hash(password, saltRounds)
+
+  const user = new User({
+    username,
+    name,
+    passwordHash,
+  })
+
+  const savedUser = await user.save()
+
+  response.status(201).json(savedUser)
+})
+
+module.exports = usersRouter
+```
+
+En la función `hash`, se indica el texto a encriptar y la cantidad de "iteraciones" que se le dará al algoritmo para generar el string hasheado. Esto es lo que se guarda en la base de datos.
+
+### Llenado de datos
+
+Considerando la relación que tienen los dos schemas definidos, se deben generar operaciones similares en ambos controllers para poder reflejar los valores de uno en otro.
+
+Por tanto, se debe agregar la capacidad de que al llenar la nota se actualice el usuario con el ID obtenido:
+
+```js
+notesRouter.post('/', async (request, response) => {
+  const body = request.body
+
+  const user = await User.findById(body.userId)
+
+  const newNote = new Note({
+    content: body.content,
+    important: Boolean(body.important) || false,
+    user: user.id
+  })
+
+  const savedNote = await newNote.save()
+  user.notes = user.notes.concat(savedNote._id)
+  await user.save()
+
+  response.status(201).json(savedNote)
+
+})
+```
+
+### Método `populate` de Mongoose para realizar uniones de colecciones
+
+Como ambas colecciones tienen información la una de la otra, se debe usar el método `populate` para poder enlazar ambas.
+
+> NOTA: Se debe tener en cuenta que Mongo es una BD NO relacional, por lo que a pesar de la unión que se hace con este método, no es posible asegurar que los datos estarán efectivamente relacionados, ya que el concepto de "transacción", que asegura tener los datos aislados y sin cambios, __NO__ aplica en Mongo.
+
+```js
+usersRouter.get('/', async (request, response) => {
+  const users = await User.find({}).populate('notes', { content: 1, important: 1 })
+  response.json(users)
+})
+```
+
+A la función `populate`, se le envía el nombre de la propiedad, y las columnas que se deben mostrar de la misma (content e important) marcando con 1.
+
+En caso de querer ocultar alguna columna, se marca con un 0.
+
+La relación es posible de realizar por la definición de `type ObjectId` realizada en la propiedad `notes`
+
+```js
+  const userSchema = new mongoose.Schema({
+    // ...
+    notes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Note'
+      }
+    ],
+  })
+```
+
+### Implementación de autenticación basada en tokens
+
+Para ello se hace uso de la librería [`jsonwebtoken`](https://github.com/auth0/node-jsonwebtoken) (`npm install jsonwebtoken`)
+
+Esto se debe implementar como un nuevo `controller` que responda a la URI `/api/login`. Recibirá como parámetro `username` y `password`.
+
+```js
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
+const loginRouter = require('express').Router()
+const User = require('../models/user')
+
+loginRouter.post('/', async (request, response) => {
+  const { username, password } = request.body
+
+  const user = await User.findOne({ username })
+  // Esta linea compara la clave enviado con el hash generado.
+  const passwordCorrect = user === null
+    ? false
+    : await bcrypt.compare(password, user.passwordHash)
+
+  if (!(user && passwordCorrect)) {
+    return response.status(401).json({
+      error: 'invalid username or password'
+    })
+  }
+
+  const userForToken = {
+    username: user.username,
+    id: user._id,
+  }
+
+  const token = jwt.sign(userForToken, process.env.SECRET)
+
+  response
+    .status(200)
+    .send({ token, username: user.username, name: user.name })
+})
+
+module.exports = loginRouter
+```
+
+> IMPORTANTE: El `SECRET` usado junto con la función `jwt.sign()` corresponde a un texto cualquiera usado para poder encriptar el contenido del token. Es una variable que va registrada dentro de las variables de entorno en el archivo `.env`, y por tanto, permite generar la firma digital del token obtenido, ya que es un valor conocido solo por el servidor.
+
+Luego, se implementa como una nueva ruta (`/api/login`) en `app.js`:
+
+```js
+// ....
+const loginRouter = require('./controllers/login')
+
+const app = express()
+
+// ....
+
+app.use('/api/login', loginRouter)
+
+```
+
+#### Uso de token para identificar usuarios e impedir la gestión, por si hay un token inválido
+
+Se usa para ello el encabezado `Authorization` recibido en la request, con el tipo *Bearer*.
+
+La modificación a realizar se aplica para el endpoint `POST`:
+
+```js
+const jwt = require('jsonwebtoken')
+
+// ...
+const getTokenFrom = request => {
+  const authorization = request.get('authorization')
+  if (authorization && authorization.startsWith('Bearer ')) {
+    return authorization.replace('Bearer ', '')
+  }
+  return null
+}
+
+notesRouter.post('/', async (request, response) => {
+  const body = request.body
+  const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: 'token invalid' })
+  }
+  const user = await User.findById(decodedToken.id)
+  //...
+})
+
+```
+
+jwt.verify, permite validar que el token generado sea válido. Si no es así, se indica eso y no se realizan más acciones.
+
+> NOTA: Si la aplicación tiene múltiples interfaces que requieren identificación, la validación de JWT debe separarse en su propio middleware. También se podría utilizar alguna librería existente como [express-jwt](https://www.npmjs.com/package/express-jwt).
+
+#### Duración del token generado
+
+Para poder hacer que el token sea seguro, se debe definir un tiempo de expiración del mismo, lo que hará que el usuario deba generar uno nuevo cuando este caduque. Para ello se debe agregar la opción `expiresIn` en la función `jwt.sign()`
+
+```js
+
+loginRouter.post('/', async (request, response) => {
+  const { username, password } = request.body
+
+  // ...
+
+  // Durará una hora el token
+  const token = jwt.sign(userForToken, process.env.SECRET, { expiresIn: 60 * 60 })
+
+  response
+    .status(200)
+    .send({ token, username: user.username, name: user.name })
+})
+```
+
+Adicionalmente, cuando expire el token generará un error indicando esa situación, lo cual se debe agregar al middleware de manejo de errores, en conjunto con una opción para indicar que no hay un token válido.
+
+```js
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+  // ...
+
+  } else if (error.name === 'JsonWebTokenError') {
+    return response.status(401).json({ error: 'token invalid' })
+  } else if (error.name === 'TokenExpiredError') {
+    return response.status(401).json({error: 'token expired'})
+  }
+
+next(error)
+}
+```
+
+> IMPORTANTE: Se debe tener en cuenta que la implementación de tokens debe ser realizada siempre usando un servidor con HTTPS, ya que el traspaso de información dentro del token, podría ser interceptado, a pesar de todas las medidas de encriptación tomadas dentro del servidor.
