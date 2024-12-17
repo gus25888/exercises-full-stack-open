@@ -1233,6 +1233,8 @@ npm i supertest --save-dev
 
 Este paquete permite generar la instancia de la aplicación Express, sin preocuparse de elegir el puerto a usar, ya que se usan puertos "internos" para el funcionamiento de la prueba solamente.
 
+Esto además, permite probar directamente la funcionalidad sin necesidad de levantar el servidor completo y de forma automatizada.
+
 ```js
 const { test, after, beforeEach } = require('node:test')
 const assert = require('node:assert')
@@ -1285,7 +1287,7 @@ after(async () => {
 
 La función `beforeEach` permite generar acciones para asegurar que la base de datos se encuentre en el mismo estado para todos los tests que se realicen.
 
-La función `after` permite
+La función `after` permite definir una acción que se realizará después de ejecutar los tests definidos. En este caso, cerrar la conexión con MongoDB.
 
 ### Elegir los tests a aplicar
 
@@ -1344,6 +1346,10 @@ Independientemente, del tipo de test a realizar es posible omitirlos del conjunt
 
     > IMPORTANTE: Los dos guiones despues de `test` indican que es el final de las opciones a enviar a node, y que el resto de los argumentos del comando serán enviados al script como tal.
 
+#### Ejecución de varias suites de prueba evitando concurrencia
+
+Si se decide definir pruebas en múltiples archivos, debe notarse que por defecto cada archivo de prueba se ejecuta en su propio proceso (ver Modelo de ejecución de pruebas en la [documentación](https://nodejs.org/api/test.html#test-runner-execution-model)). La consecuencia de esto es que diferentes archivos de prueba se ejecutan al mismo tiempo. Dado que las pruebas comparten la misma base de datos, la ejecución simultánea puede causar problemas, que pueden evitarse ejecutando las pruebas con la opción `--test-concurrency=1`, es decir, definiéndolas para que se ejecuten secuencialmente.
+
 ### async / await
 
 Es la forma recomendada de tratar con promesas. En lugar de usar la función `then()` de forma encadenada, se agrega `await` antes de la llamada a alguna función que retornará una promesa.
@@ -1362,7 +1368,7 @@ const main = async () => {
 
 #### Manejo de errores con async/await
 
-Para ello, simplemente se debe agregar secciones `try/catch` en los puntos del código en que pueden ocurrir errores. El middleware de manejo de errores, se llama desde la bloque `catch`
+Para ello, simplemente se debe agregar secciones `try/catch` en los puntos del código en que pueden ocurrir errores. El middleware de manejo de errores, se llama desde el bloque `catch`
 
 ```js
 notesRouter.post('/', async (request, response, next) => {
@@ -1557,7 +1563,7 @@ usersRouter.post('/', async (request, response) => {
 module.exports = usersRouter
 ```
 
-En la función `hash`, se indica el texto a encriptar y la cantidad de "iteraciones" que se le dará al algoritmo para generar el string hasheado. Esto es lo que se guarda en la base de datos.
+En la función `hash`, se indica el texto a encriptar y la cantidad de "iteraciones" que se le dará al algoritmo para generar el string hasheado. Esto es lo que se guarda en la base de datos y que después se utiliza para comprobar la coincidencia de la clave, es decir, se comparan *hashes*, nunca se sabe cuál es la clave del usuario.
 
 ### Llenado de datos
 
@@ -1578,6 +1584,8 @@ notesRouter.post('/', async (request, response) => {
   })
 
   const savedNote = await newNote.save()
+
+  //Aquí se actualiza lo obtenido, sumandolo a lo ya existente.
   user.notes = user.notes.concat(savedNote._id)
   await user.save()
 
@@ -1705,7 +1713,7 @@ notesRouter.post('/', async (request, response) => {
 
 ```
 
-jwt.verify, permite validar que el token generado sea válido. Si no es así, se indica eso y no se realizan más acciones.
+`jwt.verify()`, permite validar que el token generado sea válido. Si no es así, se indica eso con código 401 (Unauthorized) y no se realizan más acciones.
 
 > NOTA: Si la aplicación tiene múltiples interfaces que requieren identificación, la validación de JWT debe separarse en su propio middleware. También se podría utilizar alguna librería existente como [express-jwt](https://www.npmjs.com/package/express-jwt).
 
