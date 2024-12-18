@@ -28,6 +28,8 @@ const Button = ({ onSmash, text }) => (
 );
 ```
 
+#### Consideraciones respecto a los componentes
+
 - *Deben* definirse con mayúscula inicial. Esto también aplica si son definidos como un archivo separado, el cual debe nombrarse igual.
 - *Deben* retornar un HTML válido que tenga etiquetas de apertura y cierre, como __div__.
 - *Si* no es así, el componente completo se debe rodear de una etiqueta vacía:
@@ -334,10 +336,12 @@ En caso de que sí venga con un array con algun valor, el cambio de ese valor (o
 
 Por ahora, se visto el uso de la librería *axios* para el manejo de las peticiones necesarias: GET, POST, PUT y DELETE para obtener, crear, actualizar y borrar datos respectivamente.
 
+Esto se genera dentro del directorio `services`:
+
 ```jsx
 import axios from 'axios'
 
-const baseUrl = 'http://localhost:3001/persons'
+const baseUrl = 'http://localhost:3001/notes'
 
 const readAll = () => {
     return axios
@@ -369,6 +373,61 @@ export default {
     update,
     deleteRegister
 }
+```
+
+El código anterior permite mantener aislado en un solo módulo la interacción con el servidor backend (el cual puede ser usando el package `json-server` o un backend propio, que es lo común). Luego, cada función se debe referenciar en el archivo `jsx` que renderiza la información, es decir, `app.jsx`:
+
+```jsx
+
+//Creación:
+const App = (props) => {
+  const [notes, setNotes] = useState(null)
+  const [newNote, setNewNote] = useState('a new note...')
+  const [showAll, setShowAll] = useState(true)
+  const [errorMessage, setErrorMessage] = useState(null)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+
+  // Lectura...
+  const hook = () => {
+    noteService
+      .getAll()
+      .then(initialNotes => setNotes(initialNotes))
+  }
+  useEffect(hook, [])
+
+  const addNotes = () => {
+    // ....
+      noteService
+        .create(noteObject)
+        .then(returnedNote => {
+          setNotes(notes.concat(returnedNote))
+          setNewNote('')
+        })
+  }
+
+// Actualización:
+
+  //* Permite invertir el valor de important de la nota.
+  const toggleImportanceOf = (id) => {
+    const note = notes.find(n => n.id === id)
+    const changedNote = { ...note, important: !note.important }
+
+    //* Aquí se usa map para identificar la "note" modificada y cargarla al state de "notes"
+    noteService
+      .update(id, changedNote)
+      .then(returnedNote => {
+        setNotes(notes.map(note => note.id !== id ? note : returnedNote))
+      })
+      .catch(error => {
+        console.error(error.message);
+
+        setErrorMessage(`note '${note.content}' was already deleted from server`)
+        setTimeout(setErrorMessage(null), 5000)
+        setNotes(notes.filter(note => note.id !== id))
+      })
+  }
+
 ```
 
 ### Estilos en React
@@ -1757,3 +1816,244 @@ next(error)
 ```
 
 > IMPORTANTE: Se debe tener en cuenta que la implementación de tokens debe ser realizada siempre usando un servidor con HTTPS, ya que el traspaso de información dentro del token, podría ser interceptado, a pesar de todas las medidas de encriptación tomadas dentro del servidor.
+
+## Part 5 - Probando aplicaciones React
+
+### Integrar login en React
+
+Para ello, se debe considerar agregar las siguientes partes:
+
+1. __Servicio__: Agregar un servicio (`services/login.js`) que referencie al endpoint `login` desarrollado en el backend (en la parte 4 del curso)
+
+    Para el __servicio__, simplemente se debe usar la librería axios (o el método que se use para poder consumir los endpoint s del backend) y enviar los parámetros necesarios como una llamada POST:
+
+    ```js
+    import axios from 'axios'
+    const baseUrl = '/api/login'
+
+    const login = async credentials => {
+      const response = await axios.post(baseUrl, credentials)
+      return response.data
+    }
+
+    export default { login }
+    ```
+
+1. __Formulario__: Agregar un formulario para poder ingresar los datos de usuario y contraseña.
+
+    Esto se logra definiendo un componente (`components/LoginForm.jsx`) que contenga los campos necesarios y el botón para enviar la información.
+
+    ```jsx
+          const loginForm = ({ username, password, setUsername, setPassword, handleLogin }) => (
+            <form onSubmit={handleLogin}>
+              <div>
+                username
+                <input
+                  type="text"
+                  value={username}
+                  name="Username"
+                  onChange={({ target }) => setUsername(target.value)}
+                />
+              </div>
+              <div>
+                password
+                <input
+                  type="password"
+                  value={password}
+                  name="Password"
+                  onChange={({ target }) => setPassword(target.value)}
+                />
+              </div>
+              <button type="submit">login</button>
+            </form>)
+
+          export default loginForm
+
+    ```
+
+    Luego, ese componente se importa y se usa en `app.jsx`:
+
+    ```jsx
+    //...
+    import LoginForm from "./components/LoginForm"
+
+    const App = () => {
+      // ...
+      const [username, setUsername] = useState('')
+      const [password, setPassword] = useState('')
+      const [user, setUser] = useState(null)
+
+      const getInitialNotes = () => {
+        noteService
+          .getAll()
+          .then(initialNotes => setNotes(initialNotes))
+      }
+      useEffect(getInitialNotes, [])
+
+      useEffect(() => {
+        const loggedUserJSON = window.localStorage.getItem('loggedNoteappUser')
+        if (loggedUserJSON) {
+          const user = JSON.parse(loggedUserJSON)
+          setUser(user)
+          noteService.setToken(user.token)
+        }
+      }, [])
+
+      const handleLogin = async (event) => {
+        event.preventDefault()
+
+        try {
+          const user = await loginService.login({ username, password })
+
+          window.localStorage.setItem(
+            'loggedNoteappUser', JSON.stringify(user)
+          )
+          noteService.setToken(user.token)
+          setUser(user)
+          setUsername('')
+          setPassword('')
+
+        } catch (exception) {
+          console.error(exception)
+          setErrorMessage('Wrong credentials')
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 5000)
+        }
+      }
+
+      const handleLogout = () => {
+        window.localStorage.removeItem('loggedNoteappUser')
+        setUser(null)
+      }
+
+      // ...
+
+        return (
+          <div>
+            <Notification message={errorMessage} />
+
+            <h1>Notes</h1>
+
+            {
+              user === null ?
+                LoginForm({ username, password, handleLogin, setUsername, setPassword }) :
+                <div>
+                  <p>{user.name} logged-in <button onClick={() => { handleLogout() }}>logout</button></p>
+                  {NoteForm({ newNote, addNote, handleNoteChange, handleLogout })}
+                </div>
+            }
+
+          </div>
+          // ...
+        )
+    }
+    ```
+
+    Las variables `username`, `password`, `user` se agregan al State de la app para poder generar la sesión nueva.
+
+    > NOTA: Las funciones relacionadas con `window.localStorage` se explican más adelante en "Token de sesión persistente".
+
+1. __Token__: Agregar el token de autenticación a los endpoints ya implementados en el directorio `service` que lo requieran.
+
+    ```js
+    import axios from 'axios'
+
+    const baseUrl = '/api/notes'
+
+    let token = null
+
+    const setToken = (newToken) => {
+        token = `Bearer ${newToken}`
+    }
+
+    const getAll = () => {
+        const request = axios.get(baseUrl)
+        return request.then(response => response.data)
+    }
+
+    const create = async newObject => {
+        const config = {
+            headers: { Authorization: token }
+        }
+        const response = await axios.post(baseUrl, newObject, config)
+        return response.data
+    }
+
+    // ...
+
+    export default { setToken, getAll, create /* ... */ }
+    ```
+
+### Renderizar de forma condicional
+
+Es común usar el operador `&&` en forma de "corto-circuito" para poder determinar si se renderiza un elemento:
+
+```jsx
+const App = () => {
+  // ...
+
+  const loginForm = () => (
+    // ...
+  )
+
+  const noteForm = () => (
+    // ...
+  )
+
+  return (
+    <div>
+      <h1>Notes</h1>
+
+      <Notification message={errorMessage} />
+
+      {user === null && loginForm()}
+      {user !== null && noteForm()}
+
+      </div>
+  )
+}
+
+```
+
+Lo que significa es que si el lado izquierdo de la evaluación "AND" es "falsy", React funciona como si hubiera un `undefined`, es decir, omite renderizar algo.
+
+En cambio, si es verdadero (truthy), ejecutará la función y mostrará el formulario.
+
+#### Token de sesión persistente
+
+Una forma de hacerlo (que en general se puede usar pero puede tener problemas de seguridad ya que es potencialmente vulnerable a [ataques XSS](https://owasp.org/www-community/attacks/xss/)) es el uso de `local-storage`.
+
+local-storage es una BD de clave-valor, integrada en el navegador y que permite guardar información en forma de [DOMStrings](https://docs.w3cub.com/dom/domstring) los cuales se mantienen a pesar de realizar refrescos en la página. Son independientes por cada *origen* (suma de protocolo, dominio y puerto de una URL) usado.
+
+Como se usa ese tipo de dato, se deben manipular como JSON, es decir, usar `JSON.stringify` para guardarlos y `JSON.parse` para leerlos.
+
+```jsx
+  const handleLogin = async (event) => {
+    event.preventDefault()
+    try {
+      const user = await loginService.login({
+        username, password,
+      })
+
+      window.localStorage.setItem(
+        'loggedNoteappUser', JSON.stringify(user)
+      )
+      noteService.setToken(user.token)
+      // ...
+    } catch (exception) {
+      // ...
+    }
+  }
+
+```
+
+También es necesario saber que para existen los métodos `window.localStorage.setItem('clave')` y `window.localStorage.removeItem('clave')` para dar valor a la clave enviada y eliminar la clave enviada, respectivamente. Adicionalmente, existe `window.localStorage.clear()` que borra todas las claves.
+
+## Part 6 - Gestión avanzada del estado
+
+<!-- TODO: rellenar sección -->
+
+## Part 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
+
+<!-- TODO: rellenar sección -->

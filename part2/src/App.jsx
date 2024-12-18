@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react"
 
+import noteService from "./services/notes"
+import loginService from "./services/login"
+
 import Note from "./components/Note"
-import Notification from "./components/Notification";
-import noteService from "./services/notes";
+import Notification from "./components/Notification"
 import Footer from "./components/Footer"
+import LoginForm from "./components/LoginForm"
+import NoteForm from "./components/NoteForm"
 
 /*
 * En esta aplicación el objetivo es registrar notas usando un formulario.
-* Las "notes" se obtienen desde un archivo externo (db.json),
-* el cual se levanta como un backend local con la utilidad "json-server"
 */
 
-const App = (props) => {
+const App = () => {
+
   const [notes, setNotes] = useState(null)
   const [newNote, setNewNote] = useState('a new note...')
   const [showAll, setShowAll] = useState(true)
@@ -19,16 +22,56 @@ const App = (props) => {
   * Se especifica un hook de estado para permitir el renderizado de un mensaje de error.
   */
   const [errorMessage, setErrorMessage] = useState(null)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [user, setUser] = useState(null)
 
-  const hook = () => {
+  const getInitialNotes = () => {
     noteService
       .getAll()
       .then(initialNotes => setNotes(initialNotes))
   }
-  useEffect(hook, [])
+  useEffect(getInitialNotes, [])
 
+  useEffect(() => {
+    const loggedUserJSON = window.localStorage.getItem('loggedNoteappUser')
+    if (loggedUserJSON) {
+      const user = JSON.parse(loggedUserJSON)
+      setUser(user)
+      noteService.setToken(user.token)
+    }
+  }, [])
 
   const handleNoteChange = (event) => setNewNote(event.target.value)
+
+  const handleLogin = async (event) => {
+    event.preventDefault()
+
+    try {
+      const user = await loginService.login({ username, password })
+
+      window.localStorage.setItem(
+        'loggedNoteappUser', JSON.stringify(user)
+      )
+      noteService.setToken(user.token)
+      setUser(user)
+      setUsername('')
+      setPassword('')
+
+    } catch (exception) {
+      console.error(exception)
+      setErrorMessage('Wrong credentials')
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+    }
+  }
+
+  const handleLogout = () => {
+    window.localStorage.removeItem('loggedNoteappUser')
+    setUser(null)
+  }
+
 
   const addNote = (event) => {
     event.preventDefault();
@@ -38,16 +81,6 @@ const App = (props) => {
       important: Math.random() < 0.5, //Puede ser 1 ó 0, lo que pasa a boolean automaticamente.
     }
 
-    /*
-    * En el caso de envío de "notes" de forma local se usaría esto:
-
-      setNotes(notes.concat(noteObject))
-      setNewNote('')
-
-    * Pero al usar json-server, se modifica a una llamada POST al servidor local
-    * para cargar la información en db.json, por lo que al recibir respuesta correcta desde el server
-    * se procede a generar el proceso de actualizar el listado de notas y limpiar el campo de texto.
-    */
     noteService
       .create(noteObject)
       .then(returnedNote => {
@@ -69,13 +102,19 @@ const App = (props) => {
         setNotes(notes.map(note => note.id !== id ? note : returnedNote))
       })
       .catch(error => {
+        console.error(error.message);
         setErrorMessage(`note '${note.content}' was already deleted from server`)
         setTimeout(setErrorMessage(null), 5000)
         setNotes(notes.filter(note => note.id !== id))
       })
   }
 
-  //* Ya que se define que las "notes" parten como un null, se debe agregar un "return null" para que no se renderice nada la primera vez.
+
+
+  /*
+  * Ya que se define que las "notes" parten como un null,
+  * se debe agregar un "return null" para que no se renderice nada la primera vez.
+  */
   if (!notes) {
     return null;
   }
@@ -83,15 +122,26 @@ const App = (props) => {
 
   return (
     <div>
-      <h1>Notes</h1>
       <Notification message={errorMessage} />
+
+      <h1>Notes</h1>
+
+      {
+        user === null ?
+          LoginForm({ username, password, handleLogin, setUsername, setPassword }) :
+          <div>
+            <p>{user.name} logged-in <button onClick={() => { handleLogout() }}>logout</button></p>
+            {NoteForm({ newNote, addNote, handleNoteChange, handleLogout })}
+          </div>
+      }
+
       <div>
         <button onClick={() => { setShowAll(!showAll) }}>
           show {showAll ? 'important' : 'all'}
         </button>
       </div>
       <ul>{
-        notesToShow.map((note, id) =>
+        notesToShow.map((note) =>
           <Note
             key={note.id}
             note={note}
@@ -99,10 +149,6 @@ const App = (props) => {
         )
       }</ul>
 
-      <form onSubmit={addNote}>
-        <input value={newNote} onChange={handleNoteChange} />
-        <button type="submit">save</button>
-      </form>
       <Footer />
     </div>
   )
