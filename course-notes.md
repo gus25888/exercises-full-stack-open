@@ -178,8 +178,7 @@ Al llamar a useState, se le puede enviar un valor de "inicio" a la variable, el 
 El hecho de generar una variable asociada a useState, implica que el componente estará siempre "vigilado" por si tiene cambios.
 Si eso ocurre, se procederá a renderizar nuevamente, es decir, se realizará un refresco del mismo.
 
-> __IMPORTANTE:__ Una de las mejores prácticas en React es levantar el estado en la jerarquía de componentes.
-La documentación dice: "A menudo, varios componentes deben reflejar los mismos datos cambiantes. Recomendamos elevar el estado compartido a su ancestro común más cercano."
+> __IMPORTANTE:__ Una de las mejores prácticas en React es levantar el estado en la jerarquía de componentes. La documentación dice: "A menudo, varios componentes deben reflejar los mismos datos cambiantes. Recomendamos elevar el estado compartido a su ancestro común más cercano."
 
 También, como parte de buenas prácticas se recomienda definir componentes pequeños que construyan algo más grande.
 
@@ -1985,7 +1984,7 @@ Para ello, se debe considerar agregar las siguientes partes:
     export default { setToken, getAll, create /* ... */ }
     ```
 
-### Renderizar de forma condicional
+### Renderizar de forma condicional (uso de operador &&)
 
 Es común usar el operador `&&` en forma de "corto-circuito" para poder determinar si se renderiza un elemento:
 
@@ -2020,7 +2019,7 @@ Lo que significa es que si el lado izquierdo de la evaluación "AND" es "falsy",
 
 En cambio, si es verdadero (truthy), ejecutará la función y mostrará el formulario.
 
-#### Token de sesión persistente
+### Token de sesión persistente (uso de localStorage)
 
 Una forma de hacerlo (que en general se puede usar pero puede tener problemas de seguridad ya que es potencialmente vulnerable a [ataques XSS](https://owasp.org/www-community/attacks/xss/)) es el uso de `local-storage`.
 
@@ -2049,6 +2048,221 @@ Como se usa ese tipo de dato, se deben manipular como JSON, es decir, usar `JSON
 ```
 
 También es necesario saber que para existen los métodos `window.localStorage.setItem('clave')` y `window.localStorage.removeItem('clave')` para dar valor a la clave enviada y eliminar la clave enviada, respectivamente. Adicionalmente, existe `window.localStorage.clear()` que borra todas las claves.
+
+### props.children
+
+Son las propiedades que puede tener cualquier elemento definido como el padre de otro.
+
+Para definir un elemento padre, se debe definir usando etiquetas de apertura y cierre explicitas:
+
+```jsx
+<Togglable buttonLabel="reveal">
+  <p>this line is at start hidden</p>
+  <p>also this is hidden</p>
+</Togglable>
+```
+
+Aquí todo lo que está dentro de `Togglable` se considera hijo (children).
+
+Para poder definir correctamente los valores de un elemento hijo, existen las `props.children`, las cuales permiten pasar la información del hijo y no colisionar con las del padre.
+
+Así se define un componente padre de forma completa:
+
+```jsx
+import { useState } from 'react'
+
+const Togglable = (props) => {
+  const [visible, setVisible] = useState(false)
+
+  const hideWhenVisible = { display: visible ? 'none' : '' }
+  const showWhenVisible = { display: visible ? '' : 'none' }
+
+  const toggleVisibility = () => {
+    setVisible(!visible)
+  }
+
+  return (
+    <div>
+      <div style={hideWhenVisible}>
+        <button onClick={toggleVisibility}>{props.buttonLabel}</button>
+      </div>
+      <div style={showWhenVisible}>
+        {props.children}
+        <button onClick={toggleVisibility}>cancel</button>
+      </div>
+    </div>
+  )
+}
+
+export default Togglable
+
+```
+
+Estas propiedades `children` existen en todos los componentes definidos, sin embargo, son definidas como un array vacío. Esto en el caso de los elementos definidos de forma que son autocerrados:
+
+```jsx
+// Aquí props.children === []
+<Note
+  key={note.id}
+  note={note}
+  toggleImportance={() => toggleImportanceOf(note.id)}
+/>
+
+```
+
+### Traspasar el manejo de las variables de estado a su componente
+
+Para ello, simplemente se debe hacer que `useState()` sea determinado dentro del componente y ajustar de forma acorde la app. Esto puede ser realizado para variables que son solo afectadas directamente y depende solo del componente en que se renderizan.
+
+```jsx
+import { useState } from 'react'
+
+const NoteForm = ({ createNote }) => {
+  const [newNote, setNewNote] = useState('')
+
+  const addNote = (event) => {
+    event.preventDefault()
+    createNote({
+      content: newNote,
+      important: true
+    })
+
+    setNewNote('')
+  }
+
+  return (
+    <div>
+      <h2>Create a new note</h2>
+
+      <form onSubmit={addNote}>
+        <input
+          value={newNote}
+          onChange={event => setNewNote(event.target.value)}
+        />
+        <button type="submit">save</button>
+      </form>
+    </div>
+  )
+}
+
+export default NoteForm
+```
+
+En este caso, el componente recibe la función que permite generar el `submit` del formulario definido. La función `createNote` está definida en la app.jsx:
+
+```jsx
+  const addNote = (noteObject) => {
+    noteFormRef.current.toggleVisibility()
+
+    noteService
+      .create(noteObject)
+      .then(returnedNote => {
+        setNotes(notes.concat(returnedNote))
+      })
+
+  }
+
+
+  // ...
+
+  <div>
+  <p>{user.name} logged-in <button onClick={handleLogout}>logout</button></p>
+    <Togglable buttonLabel='new note' ref={noteFormRef}>
+    <NoteForm createNote={addNote} />
+    </Togglable>
+  </div>
+```
+
+### Referencias a componentes (`ref` de React)
+
+Esto hace uso del hook `useRef` de React, lo cual genera una `ref`. La ref generada constituye una variable que __no__ genera nuevos renderizados del componente al recibir cambios, y es seguido por React durante toda la vida de la aplicación.
+
+```jsx
+import { useEffect, useState, useRef } from "react"
+
+//...
+
+const App = () => {
+  const noteFormRef = useRef()
+
+  const [loginVisible, setLoginVisible] = useState(false)
+  const [notes, setNotes] = useState(null)
+
+  // ...
+
+    return (
+    <div>
+      <Notification message={errorMessage} />
+
+      <h1>Notes</h1>
+
+      {
+        user === null ? loginForm() :
+          <div>
+            <p>{user.name} logged-in <button onClick={handleLogout}>logout</button></p>
+            <Togglable buttonLabel='new note' ref={noteFormRef}>
+              <NoteForm createNote={addNote} />
+            </Togglable>
+          </div>
+      }
+
+      // ...
+    )
+}
+```
+
+Dentro del código, al llamar `useRef()`, se retorna una variable, que es un objeto plano JS, el cual contiene la propiedad `current`, cuyo valor sea el enviado en la llamada a `useRef()`.
+
+#### Uso de ref para poder acceder a variables internas de un componente
+
+Si lo que se quiere lograr es manipular de forma dinámica el DOM de un página, la forma de realizar con React es usando una `ref`, a la cual se le asigne en el elemento a manipular.
+
+Así ocurre en el ejemplo anterior en que se asigna como una propiedad de la etiqueta `Togglable`:
+
+```jsx
+<Togglable buttonLabel='new note' ref={noteFormRef}>
+```
+
+Luego, en la definición del componente, se debe indicar explicitamente, que se quiere "exponer" alguna función o comportamiento, ya que, por defecto en React, los componentes personalizados tienen sus propiedades __inaccesibles__ para cualquier otro componente. Esto se logra usando `forwardRef()` y `useImperativeHandle()`.
+
+```jsx
+import { useState, forwardRef, useImperativeHandle } from 'react'
+
+const Togglable = forwardRef((props, refs) => {
+  const [visible, setVisible] = useState(false)
+
+  const hideWhenVisible = { display: visible ? 'none' : '' }
+  const showWhenVisible = { display: visible ? '' : 'none' }
+
+  const toggleVisibility = () => {
+    setVisible(!visible)
+  }
+
+  useImperativeHandle(refs, () => {
+    return {
+      toggleVisibility
+    }
+  })
+
+  return (
+    <div>
+      <div style={hideWhenVisible}>
+        <button onClick={toggleVisibility}>{props.buttonLabel}</button>
+      </div>
+      <div style={showWhenVisible}>
+        {props.children}
+        <button onClick={toggleVisibility}>cancel</button>
+      </div>
+    </div>
+  )
+})
+
+export default Togglable
+
+```
+
+`forwardRef()` permite pasar las referencias del padre a sus hijos, además, de pasar las props de la misma.
+`useImperativeHandle()` permite limitar la cantidad de propiedades que se quieren exponer de un elemento, ya que estará limitado por lo que se retorne en el objeto dentro de esa función.
 
 ## Part 6 - Gestión avanzada del estado
 

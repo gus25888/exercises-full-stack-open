@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 
 import noteService from "./services/notes"
 import loginService from "./services/login"
@@ -6,6 +6,7 @@ import loginService from "./services/login"
 import Note from "./components/Note"
 import Notification from "./components/Notification"
 import Footer from "./components/Footer"
+import Togglable from "./components/Togglable"
 import LoginForm from "./components/LoginForm"
 import NoteForm from "./components/NoteForm"
 
@@ -14,9 +15,10 @@ import NoteForm from "./components/NoteForm"
 */
 
 const App = () => {
+  const noteFormRef = useRef()
 
+  const [loginVisible, setLoginVisible] = useState(false)
   const [notes, setNotes] = useState(null)
-  const [newNote, setNewNote] = useState('a new note...')
   const [showAll, setShowAll] = useState(true)
   /*
   * Se especifica un hook de estado para permitir el renderizado de un mensaje de error.
@@ -42,7 +44,8 @@ const App = () => {
     }
   }, [])
 
-  const handleNoteChange = (event) => setNewNote(event.target.value)
+  const handleUsernameChange = ({ target }) => setUsername(target.value)
+  const handlePasswordChange = ({ target }) => setPassword(target.value)
 
   const handleLogin = async (event) => {
     event.preventDefault()
@@ -73,19 +76,13 @@ const App = () => {
   }
 
 
-  const addNote = (event) => {
-    event.preventDefault();
-
-    const noteObject = {
-      content: newNote,
-      important: Math.random() < 0.5, //Puede ser 1 ó 0, lo que pasa a boolean automaticamente.
-    }
+  const addNote = (noteObject) => {
+    noteFormRef.current.toggleVisibility()
 
     noteService
       .create(noteObject)
       .then(returnedNote => {
         setNotes(notes.concat(returnedNote))
-        setNewNote('')
       })
 
   }
@@ -110,7 +107,28 @@ const App = () => {
   }
 
 
+  const loginForm = () => {
+    const hideWhenVisible = { display: loginVisible ? 'none' : '' }
+    const showWhenVisible = { display: loginVisible ? '' : 'none' }
 
+    return (
+      <div>
+        <div style={hideWhenVisible}>
+          <button onClick={() => setLoginVisible(true)}>log in</button>
+        </div>
+        <div style={showWhenVisible}>
+          <LoginForm
+            username={username}
+            password={password}
+            handleUsernameChange={handleUsernameChange}
+            handlePasswordChange={handlePasswordChange}
+            handleSubmit={handleLogin}
+          />
+          <button onClick={() => setLoginVisible(false)}>cancel</button>
+        </div>
+      </div>
+    )
+  }
   /*
   * Ya que se define que las "notes" parten como un null,
   * se debe agregar un "return null" para que no se renderice nada la primera vez.
@@ -127,11 +145,12 @@ const App = () => {
       <h1>Notes</h1>
 
       {
-        user === null ?
-          LoginForm({ username, password, handleLogin, setUsername, setPassword }) :
+        user === null ? loginForm() :
           <div>
-            <p>{user.name} logged-in <button onClick={() => { handleLogout() }}>logout</button></p>
-            {NoteForm({ newNote, addNote, handleNoteChange, handleLogout })}
+            <p>{user.name} logged-in <button onClick={handleLogout}>logout</button></p>
+            <Togglable buttonLabel='new note' ref={noteFormRef}>
+              <NoteForm createNote={addNote} />
+            </Togglable>
           </div>
       }
 
