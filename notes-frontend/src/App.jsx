@@ -1,14 +1,14 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef } from 'react'
 
-import noteService from "./services/notes"
-import loginService from "./services/login"
+import noteService from './services/notes'
+import loginService from './services/login'
 
-import Note from "./components/Note"
-import Notification from "./components/Notification"
-import Footer from "./components/Footer"
-import Togglable from "./components/Togglable"
-import LoginForm from "./components/LoginForm"
-import NoteForm from "./components/NoteForm"
+import Note from './components/Note'
+import Notification from './components/Notification'
+import Footer from './components/Footer'
+import Togglable from './components/Togglable'
+import LoginForm from './components/LoginForm'
+import NoteForm from './components/NoteForm'
 
 /*
 * En esta aplicación el objetivo es registrar notas usando un formulario.
@@ -99,7 +99,7 @@ const App = () => {
         setNotes(notes.map(note => note.id !== id ? note : returnedNote))
       })
       .catch(error => {
-        console.error(error.message);
+        console.error(error.message)
         setErrorMessage(`note '${note.content}' was already deleted from server`)
         setTimeout(setErrorMessage(null), 5000)
         setNotes(notes.filter(note => note.id !== id))
@@ -134,7 +134,7 @@ const App = () => {
   * se debe agregar un "return null" para que no se renderice nada la primera vez.
   */
   if (!notes) {
-    return null;
+    return null
   }
   const notesToShow = showAll ? notes : notes.filter(note => note.important)
 
