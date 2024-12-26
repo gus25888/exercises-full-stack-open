@@ -2175,7 +2175,7 @@ En este caso, el componente recibe la función que permite generar el `submit` d
 
 ### Referencias a componentes (`ref` de React)
 
-Esto hace uso del hook `useRef` de React, lo cual genera una `ref`. La ref generada constituye una variable que __no__ genera nuevos renderizados del componente al recibir cambios, y es seguido por React durante toda la vida de la aplicación.
+Esto hace uso del hook `useRef` de React, lo cual genera una `ref`. La ref generada constituye una variable que __no__ genera nuevos renderizados del componente al recibir cambios, y es seguido por React durante toda la vida del componente.
 
 ```jsx
 import { useEffect, useState, useRef } from "react"
@@ -2263,6 +2263,404 @@ export default Togglable
 
 `forwardRef()` permite pasar las referencias del padre a sus hijos, además, de pasar las props de la misma.
 `useImperativeHandle()` permite limitar la cantidad de propiedades que se quieren exponer de un elemento, ya que estará limitado por lo que se retorne en el objeto dentro de esa función.
+
+### prop-types: Validación de datos hacia componentes React
+
+Es una librería que permite la validación de los props enviados a los componentes en React a nivel de Desarrollo.
+Para su uso se debe instalar `npm install prop-types`.
+
+Luego, se importa en el componente y se indica como un objeto las variables y sus restricciones correspondientes:
+
+```jsx
+import PropTypes from 'prop-types'
+
+const LoginForm = ({ username, password, handleSubmit, handleUsernameChange, handlePasswordChange }) => {
+  // ...
+}
+
+LoginForm.PropTypes = {
+  username: PropTypes.string.isRequired,
+  password: PropTypes.string.isRequired,
+  handleSubmit: PropTypes.func.isRequired,
+  handleUsernameChange: PropTypes.func.isRequired,
+  handlePasswordChange: PropTypes.func.isRequired
+}
+
+export default LoginForm
+```
+
+Detalles de su uso se pueden encontrar [aquí](https://www.dhiwise.com/post/solution-for-children-is-missing-in-props-validation-in)
+
+### eslint en React
+
+#### eslint versión 9.3 en adelante
+
+Las aplicaciones creadas para React con Vite, ya vienen con eslint incorporado.
+
+Por tanto, solo se debe modificar el archivo `eslint.config.js`, ubicado en la raíz del proyecto, agregando dos cosas
+
+- Valor `ignores`: que permiten indicar qué archivos / directorios no serán considerados por eslint.
+
+```js
+  { ignores: ['node_modules', 'dist', 'vite.config.js'] },
+```
+
+- Valor `rules`: que permiten indicar reglas específicas a considerar dentro del proyecto.
+
+```js
+      'indent': [
+        'error',
+        2
+      ],
+      'linebreak-style': [
+        'error',
+        'unix'
+      ],
+      'quotes': [
+        'error',
+        'single'
+      ],
+      'semi': [
+        'error',
+        'never'
+      ],
+      'eqeqeq': 'error',
+      'no-trailing-spaces': 'error',
+      'object-curly-spacing': [
+        'error', 'always'
+      ],
+      'arrow-spacing': [
+        'error', { 'before': true, 'after': true }
+      ],
+      'no-console': 0,
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 0,
+      'no-unused-vars': 0
+```
+
+Con esto, el archivo quedará así:
+
+```js
+import js from '@eslint/js'
+import globals from 'globals'
+import react from 'eslint-plugin-react'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+
+export default [
+  { ignores: ['node_modules', 'dist', 'vite.config.js'] },
+  {
+    files: ['**/*.{js,jsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    settings: { react: { version: '18.3' } },
+    plugins: {
+      react,
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...react.configs.recommended.rules,
+      ...react.configs['jsx-runtime'].rules,
+      ...reactHooks.configs.recommended.rules,
+      'react/jsx-no-target-blank': 'off',
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+      'indent': [
+        'error',
+        2
+      ],
+      'linebreak-style': [
+        'error',
+        'unix'
+      ],
+      'quotes': [
+        'error',
+        'single'
+      ],
+      'semi': [
+        'error',
+        'never'
+      ],
+      'eqeqeq': 'error',
+      'no-trailing-spaces': 'error',
+      'object-curly-spacing': [
+        'error', 'always'
+      ],
+      'arrow-spacing': [
+        'error', { 'before': true, 'after': true }
+      ],
+      'no-console': 0,
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 0,
+      'no-unused-vars': 0
+    },
+  },
+]
+
+```
+
+#### Versiones anteriores de eslint
+
+En caso de versiones anteriores, los `ignore` van en un archivo separado, llamado `.eslintignore`, en el que se ponen en cada línea los archivos y directorios a ignorar.
+
+En el caso del archivo con las `rules`, se denominará `.eslintrc.cjs` y tendrá el siguiente formato:
+
+```js
+module.exports = {
+  root: true,
+  env: { browser: true, es2020: true },
+  extends: [
+    'eslint:recommended',
+    'plugin:react/recommended',
+    'plugin:react/jsx-runtime',
+    'plugin:react-hooks/recommended',
+  ],
+  ignorePatterns: ['dist', '.eslintrc.cjs'],
+  parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+  settings: { react: { version: '18.2' } },
+  plugins: ['react-refresh'],
+  rules: {
+    'react-refresh/only-export-components': [
+      'warn',
+      { allowConstantExport: true },
+    ],
+    'indent': [
+      'error',
+      2
+    ],
+    'linebreak-style': [
+      'error',
+      'unix'
+    ],
+    'quotes': [
+      'error',
+      'single'
+    ],
+    'semi': [
+      'error',
+      'never'
+    ],
+    'eqeqeq': 'error',
+    'no-trailing-spaces': 'error',
+    'object-curly-spacing': [
+      'error', 'always'
+    ],
+    'arrow-spacing': [
+      'error', { 'before': true, 'after': true }
+    ],
+    'no-console': 0,
+    'react/react-in-jsx-scope': 'off',
+    'react/prop-types': 0,
+    'no-unused-vars': 0
+  },
+}
+
+```
+
+### Prueba de aplicaciones React - Uso de Vitest y jsdom
+
+> IMPORTANTE: La forma de definir la ubicación de las pruebas difiere algo en caso del Frontend. Es válido considerar que las pruebas se encuentren juntas con el componente que están probando, por lo que el archivo `test.js` que se genere quedará en el mismo directorio. Esto aplica para pruebas __unitarias__. Para pruebas de __integración__, ahí sí se vuelve a dejar todas las pruebas en un directorio `test`.
+
+#### Instalaciones necesarias
+
+Se requiere instalar las siguientes librerías de base: `vitest` y `jsdom`
+
+`npm install --save-dev vitest jsdom`
+
+También se hace necesario para poder renderizar componentes React, las librerías `react-testing-library` y `jest-dom`
+
+`npm install --save-dev @testing-library/react @testing-library/jest-dom`
+
+Además, se debe instalar la librería `user-event` para poder simular la interacción del usuario:
+
+`npm install --save-dev @testing-library/user-event`
+
+Luego, se puede instalar este plugin para evitar que eslint indique errores en las definiciones de funciones obtenidas desde las librerías de test (ya que no son importadas directamente en el archivo `.test.js`):
+
+`npm install --save-dev eslint-plugin-vitest-globals`
+
+Y se debe agregar las lineas siguientes en el archivo de eslint (`eslint.config.js`):
+
+```js
+module.exports = {
+  root: true,
+  env: {
+    browser: true,
+    es2020: true,
+    "vitest-globals/env": true  //AGREGAR ESTO
+  },
+  extends: [
+    'eslint:recommended',
+    'plugin:react/recommended',
+    'plugin:react/jsx-runtime',
+    'plugin:react-hooks/recommended',
+    'plugin:vitest-globals/recommended', //AGREGAR ESTO
+  ],
+  // ...
+}
+
+```
+
+Con esas instalaciones realizadas, (documentación [aquí](https://testing-library.com/)) se puede proceder a realizar las configuraciones para poder realizar las pruebas.
+
+#### Configuración de las librerías de prueba
+
+- Se debe agregar comando `vitest run`, bajo la denominación `test` en `package.json`
+
+  ```json
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      // ...
+      "test": "vitest run"
+    },
+  ```
+
+- Agregar nuevo archivo `testSetup.js` en la raíz del proyecto, para hacer el setup de las pruebas:
+
+  ```js
+  import { afterEach } from 'vitest'
+  import { cleanup } from '@testing-library/react'
+  import '@testing-library/jest-dom/vitest'
+
+  afterEach(() => {
+    cleanup()
+  })
+  ```
+
+  > NOTA: Al poner `globals: true` permite *omitir* la necesidad de importar palabras clave como `describe`, `test` y `expect` en las pruebas.
+
+- Modificar archivo `vite.config.js` para utilizar el setup. Se debe agregar el objeto `test` al archivo para poder indicarlo:
+
+  ```js
+  export default defineConfig({
+    plugins: [react()],
+    server: {
+      // ...
+    },
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: './testSetup.js',
+    }
+  })
+
+  ```
+
+#### Implementación de las pruebas
+
+Para implementar cualquier prueba se debe definir un archivo con el nombre del componente y la extensión `test.js`. Por ejemplo, el siguiente código prueba la renderización correcta del componente Note.
+
+```js
+import { render, screen } from '@testing-library/react'
+import Note from './Note'
+
+test('renders content', () => {
+  const note = {
+    content: 'Component testing is done with react-testing-library',
+    important: true
+  }
+
+
+  const { container } = render(<Note note={note} />)
+
+
+  const div = container.querySelector('.note')
+  expect(div).toHaveTextContent(
+    'Component testing is done with react-testing-library'
+  )
+})
+
+```
+
+> NOTA: A pesar de que hay distintos métodos para encontrar elementos para su uso en pruebas, el uso de `container` es el más flexible, ya que la función `querySelector()` , que tienen disponible es idénticaa la usada en el desarrollo de una página web.
+
+o de esta otra forma:
+
+```js
+import { render, screen } from '@testing-library/react'
+import Note from './Note'
+
+test('renders content', () => {
+  const note = {
+    content: 'Component testing is done with react-testing-library',
+    important: true
+  }
+
+  render(<Note note={note} />)
+
+  const element = screen.getByText('Component testing is done with react-testing-library')
+
+
+  expect(element).toBeDefined()
+})
+```
+
+Luego, con el archivo definido, se puede ejecutar la prueba con el comando `npm test`.
+
+#### Cobertura de las pruebas (Coverage)
+
+Para validar la cobertura que tienen las pruebas realizadas se debe usar el siguiente comando:
+
+`npm test -- --coverage`
+
+#### Elementos más importantes en la librería
+
+- `render`: Permite mostrar el elemento dentro del navegador simulado.
+- `screen`: Permite el acceso a la ventana definida dentro del navegador simulado. Dentro de él existe un objeto `window`, idéntico al de un navegador real, en donde se puede hacer búsqueda de elementos a través del DOM de la página.
+
+  - `debug()`, que funciona como un `console.log` permitiendo mostrar todos los elementos generados en la ejecución de la prueba.
+  - `getBy...()`, que permite buscar e identificar elementos dentro de la página creada para poder validarlos, similar a `querySelector()`
+
+### Simulación de acciones del usuario con userEvent
+
+La librería `user-event` tiene métodos con nombres similares (o idénticos) a los eventos de los elementos HTML, como click.
+
+Para su uso, se debe generar una "session" que permita simular la creación de un usuario así:
+
+```js
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import Note from './Note'
+
+
+test('clicking the button calls event handler once', async () => {
+  const note = {
+    content: 'Component testing is done with react-testing-library',
+    important: true
+  }
+
+  // vi.fn(), (de vitest) permite generar una función mock para simular la función que debería ir en el lugar, es decir, simular la creación de las funciones de dependencia del componente.
+  const mockHandler = vi.fn()
+
+  render(
+    <Note note={note} toggleImportance={mockHandler} />
+  )
+
+  // Esto crea la session del usuario
+  const user = userEvent.setup()
+  const button = screen.getByText('make not important')
+
+  // Luego, el uso de `click` retona una promesa que simula ejecución del click.
+  await user.click(button)
+
+  expect(mockHandler.mock.calls).toHaveLength(1)
+})
+
+```
+
+> IMPORTANTE: Considerando que las pruebas buscan probar interacciones de los elementos de una página, es necesario, la mayoría de veces, definir una class al elemento en sí, para poder encontrarlo más fácilmente.
 
 ## Part 6 - Gestión avanzada del estado
 
