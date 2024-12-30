@@ -2498,7 +2498,7 @@ module.exports = {
   env: {
     browser: true,
     es2020: true,
-    "vitest-globals/env": true  //AGREGAR ESTO
+    vitest-globals/env: true  //AGREGAR ESTO
   },
   extends: [
     'eslint:recommended',
@@ -2609,6 +2609,8 @@ test('renders content', () => {
 
 Luego, con el archivo definido, se puede ejecutar la prueba con el comando `npm test`.
 
+> NOTA: Al igual que con las pruebas de backend, es posible usar el flag `--test-name-pattern 'test-name'`  en el comando `npm test --` para filtrar y aplicar solo las pruebas necesarias.
+
 #### Cobertura de las pruebas (Coverage)
 
 Para validar la cobertura que tienen las pruebas realizadas se debe usar el siguiente comando:
@@ -2621,7 +2623,7 @@ Para validar la cobertura que tienen las pruebas realizadas se debe usar el sigu
 - `screen`: Permite el acceso a la ventana definida dentro del navegador simulado. Dentro de él existe un objeto `window`, idéntico al de un navegador real, en donde se puede hacer búsqueda de elementos a través del DOM de la página.
 
   - `debug()`, que funciona como un `console.log` permitiendo mostrar todos los elementos generados en la ejecución de la prueba.
-  - `getBy...()`, que permite buscar e identificar elementos dentro de la página creada para poder validarlos, similar a `querySelector()`
+  - `getBy...()`, que permite buscar e identificar elementos dentro de la página creada para poder validarlos, similar a `querySelector()`. Se debe considerar que de las variedades a usar, hay que seleccionar el que sea más adecuado para la situación dependiendo de la definición del HTML que se busque. Más detalles [aquí](https://testing-library.com/docs/queries/about)
 
 ### Simulación de acciones del usuario con userEvent
 
@@ -2661,6 +2663,122 @@ test('clicking the button calls event handler once', async () => {
 ```
 
 > IMPORTANTE: Considerando que las pruebas buscan probar interacciones de los elementos de una página, es necesario, la mayoría de veces, definir una class al elemento en sí, para poder encontrarlo más fácilmente.
+
+### Pruebas de Extremo a Extremo (E2E) con Playwright
+
+#### Instalación
+
+Para poder usar [Playwright](https://playwright.dev/) se debe generar un proyecto node separado en el cual se definan las pruebas a realizar. Esto se logra usando el comando `npm init playwright@latest` dentro de un directorio nuevo separado del frontend y del backend.
+
+Esto implica que el proyecto de pruebas funciona independiente. Por tanto, se deben levantar los dos proyectos para poder aplicar las pruebas.
+
+#### Configuraciones del proyecto de pruebas
+
+Con la implementación del comando `playwright`, se debe agregar las siguientes líneas al archivo `playwright.config.js`:
+
+```js
+module.exports = defineConfig({
+
+  timeout: 3000,
+  fullyParallel: false,
+  workers: 1,
+  // ...
+
+  use: {
+    baseURL: 'http://localhost:5173',
+  }
+})
+```
+
+- `timeout` permite determinar el tiempo que esperará Playwright para que cualquier elemento buscado dentro del frontend esté preparado para las acciones a probar.
+
+- `fullyParallel` indica que se requiere que las pruebas se ejecuten de forma secuencial, debido a que la conexión a la base de datos, puede presentar problemas si se ejecuta en modo de paralelismo.
+
+- `workers` indica la cantidad de procesos que se generarán para cada prueba.
+
+- `user.baseURL` indica la URL a la que se apunta en las pruebas realizadas. Con ello, se puede indicar que el acceso a la raíz de la aplicación sea llamado solo con slash ('/')
+
+Además, como es un proyecto Node, se deben definir los comandos que permitirán ejecutar las pruebas. Dentro de `package.json`:
+
+```json
+{
+  // ...
+  "scripts": {
+    "test": "playwright test",
+    "test:report": "playwright show-report"
+  },
+  // ...
+}
+```
+
+> NOTA: La opción `show-report` levanta un servidor local que renderiza una página web con todos los datos compilados de las pruebas realizadas, lo cual se genera con cada ejecución de `playwright test`.
+
+#### Opciones adicionales para el comando `npm test`
+
+Adicionalmente, existen flags que se pueden indicar para poder modificar el comportamiento obtenido al ejecutar las pruebas.
+
+- Si se quiere probar en un solo navegador, ya que, por defecto, Playwright prueba en 3 navegadores cada suite, se debe usar el flag `--project chromium`:
+
+  `npm test -- --project chromium`
+
+- Si se quiere levantar un entorno gráfico al realizar cada prueba, se debe usar el flag `--ui`:
+
+  `npm run test -- --ui`
+
+- Si se quiere ejecutar solo una prueba se puede indicar con el flag `-g`:
+
+  `npm test -- -g "login fails with wrong password"`
+
+- Si se quiere revisar una prueba en particular, para su ejecución paso a paso, se debe usar el flag `--debug`:
+
+  `npm test -- -g "importance can be changed" --debug`
+
+- Si se quiere dejar un rastro de la prueba realizada, se debe usar el flag `--trace on`
+
+  `npm run test -- --trace on`
+
+Por último, es posible [generar una nueva prueba](https://playwright.dev/docs/codegen-intro) grabando la interacción con el navegador al realizarla por una persona. Para ello, se puede usar `npx playwright codegen URL_A_PROBAR`, lo cual permitirá registrar todos los identificadores y acciones requeridas para poder repetir las acciones registradas.
+
+#### Configuraciones para Frontend
+
+En el Frontend, solo se debe levantar la aplicación en modo desarrollo, usando el comando `npm run dev`
+
+#### Configuraciones para Backend
+
+Se debe configurar un nuevo modo de inicio del backend para uso en pruebas. Por tanto, se debe agregar un nuevo script en `package.json`
+
+```json
+{
+  // ...
+  "scripts": {
+    // ...
+    "start:test": "NODE_ENV=test node index.js"
+  },
+  // ...
+}
+```
+
+Este modo se debe usar al levantar el backend para las pruebas.
+
+#### Implementación de pruebas
+
+Las pruebas como tal, serán definidas dentro del directorio `tests` y tendrán extensión `spec.js`. Por ejemplo para probar el acceso a la aplicación Notes:
+
+```js
+const { test, describe, expect } = require('@playwright/test')
+
+
+describe('Note app', () => {
+  test('front page can be opened', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+
+    const locator = await page.getByText('Notes')
+    await expect(locator).toBeVisible()
+    await expect(page.getByText('Note app, Department of Computer Science, University of Helsinki 2024')).toBeVisible()
+  })
+})
+
+```
 
 ## Part 6 - Gestión avanzada del estado
 
