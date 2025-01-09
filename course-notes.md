@@ -9,13 +9,13 @@ Usando Vite:
 Para npm 6.x (desactualizado, pero aun en uso por algunos):
 
 ```command
-npm create vite@latest part1 --template react
+npm create vite@latest `projectName` --template react
 ```
 
-npm 7+ (el doble guion adicional es necesario):
+npm 7+ (el doble guion adicional, después de `projectName` es necesario):
 
 ```command
-npm create vite@latest part1 -- *--*template react
+npm create vite@latest `projectName` -- --template react
 ```
 
 ### Componentes
@@ -284,7 +284,7 @@ const App = () => {
 }
 ```
 
-> NOTA: Es recomendado por React que las funciones asociadas a controladores de Eventos, se denominen handle*Event*
+> __NOTA__: Es recomendado por React que las funciones asociadas a controladores de Eventos, se denominen handle*Event*
 
 _________________________________________________________________________________________________________________________
 
@@ -305,7 +305,7 @@ Para el renderizado de elementos que son múltiples, se puede usar __map__ para 
     }</ul>
 ```
 
-> IMPORTANTE: Se debe agregar una propiedad "key" que sea única, para que React pueda reconocer y asociar correctamente cada componente generado con el loop. Su valor debe ser un id generado de forma específica para ese componente, es decir, NO se debe usar el indice del array en que se encuentran, por ej.
+> __IMPORTANTE__: Se debe agregar una propiedad "key" que sea única, para que React pueda reconocer y asociar correctamente cada componente generado con el loop. Su valor debe ser un id generado de forma específica para ese componente, es decir, NO se debe usar el indice del array en que se encuentran, por ej.
 
 ### Implementación de formularios
 
@@ -319,7 +319,7 @@ Ej.:
 <input value={newNote} onChange={handleNoteChange} />
 ```
 
-> IMPORTANTE: Se debe especificar un evento "onChange" para que un input sea reconocido por React como uno que espera cambios. Si no se asume que es un "read-only"
+> __IMPORTANTE__: Se debe especificar un evento "onChange" para que un input sea reconocido por React como uno que espera cambios. Si no se asume que es un "read-only"
 
 ### useEffect (Hook de Efecto) para manejar datos externos a la aplicación
 
@@ -1402,7 +1402,7 @@ Independientemente, del tipo de test a realizar es posible omitirlos del conjunt
         npm run test -- --test-name-pattern="notes"
     ```
 
-    > IMPORTANTE: Los dos guiones despues de `test` indican que es el final de las opciones a enviar a node, y que el resto de los argumentos del comando serán enviados al script como tal.
+    > __IMPORTANTE__: Los dos guiones despues de `test` indican que es el final de las opciones a enviar a node, y que el resto de los argumentos del comando serán enviados al script como tal.
 
 #### Ejecución de varias suites de prueba evitando concurrencia
 
@@ -1656,7 +1656,7 @@ notesRouter.post('/', async (request, response) => {
 
 Como ambas colecciones tienen información la una de la otra, se debe usar el método `populate` para poder enlazar ambas.
 
-> NOTA: Se debe tener en cuenta que Mongo es una BD NO relacional, por lo que a pesar de la unión que se hace con este método, no es posible asegurar que los datos estarán efectivamente relacionados, ya que el concepto de "transacción", que asegura tener los datos aislados y sin cambios, __NO__ aplica en Mongo.
+> __NOTA__: Se debe tener en cuenta que Mongo es una BD NO relacional, por lo que a pesar de la unión que se hace con este método, no es posible asegurar que los datos estarán efectivamente relacionados, ya que el concepto de "transacción", que asegura tener los datos aislados y sin cambios, __NO__ aplica en Mongo.
 
 ```js
 usersRouter.get('/', async (request, response) => {
@@ -1725,7 +1725,7 @@ loginRouter.post('/', async (request, response) => {
 module.exports = loginRouter
 ```
 
-> IMPORTANTE: El `SECRET` usado junto con la función `jwt.sign()` corresponde a un texto cualquiera usado para poder encriptar el contenido del token. Es una variable que va registrada dentro de las variables de entorno en el archivo `.env`, y por tanto, permite generar la firma digital del token obtenido, ya que es un valor conocido solo por el servidor.
+> __IMPORTANTE__: El `SECRET` usado junto con la función `jwt.sign()` corresponde a un texto cualquiera usado para poder encriptar el contenido del token. Es una variable que va registrada dentro de las variables de entorno en el archivo `.env`, y por tanto, permite generar la firma digital del token obtenido, ya que es un valor conocido solo por el servidor.
 
 Luego, se implementa como una nueva ruta (`/api/login`) en `app.js`:
 
@@ -1773,7 +1773,7 @@ notesRouter.post('/', async (request, response) => {
 
 `jwt.verify()`, permite validar que el token generado sea válido. Si no es así, se indica eso con código 401 (Unauthorized) y no se realizan más acciones.
 
-> NOTA: Si la aplicación tiene múltiples interfaces que requieren identificación, la validación de JWT debe separarse en su propio middleware. También se podría utilizar alguna librería existente como [express-jwt](https://www.npmjs.com/package/express-jwt).
+> __NOTA__: Si la aplicación tiene múltiples interfaces que requieren identificación, la validación de JWT debe separarse en su propio middleware. También se podría utilizar alguna librería existente como [express-jwt](https://www.npmjs.com/package/express-jwt).
 
 #### Duración del token generado
 
@@ -1814,7 +1814,7 @@ next(error)
 }
 ```
 
-> IMPORTANTE: Se debe tener en cuenta que la implementación de tokens debe ser realizada siempre usando un servidor con HTTPS, ya que el traspaso de información dentro del token, podría ser interceptado, a pesar de todas las medidas de encriptación tomadas dentro del servidor.
+> __IMPORTANTE__: Se debe tener en cuenta que la implementación de tokens debe ser realizada siempre usando un servidor con HTTPS, ya que el traspaso de información dentro del token, podría ser interceptado, a pesar de todas las medidas de encriptación tomadas dentro del servidor.
 
 ## Part 5 - Probando aplicaciones React
 
@@ -1951,7 +1951,7 @@ Para ello, se debe considerar agregar las siguientes partes:
 
     Las variables `username`, `password`, `user` se agregan al State de la app para poder generar la sesión nueva.
 
-    > NOTA: Las funciones relacionadas con `window.localStorage` se explican más adelante en "Token de sesión persistente".
+    > __NOTA__: Las funciones relacionadas con `window.localStorage` se explican más adelante en "Token de sesión persistente".
 
 1. __Token__: Agregar el token de autenticación a los endpoints ya implementados en el directorio `service` que lo requieran.
 
@@ -2470,7 +2470,7 @@ module.exports = {
 
 ### Prueba de aplicaciones React - Uso de Vitest y jsdom
 
-> IMPORTANTE: La forma de definir la ubicación de las pruebas difiere algo en caso del Frontend. Es válido considerar que las pruebas se encuentren juntas con el componente que están probando, por lo que el archivo `test.js` que se genere quedará en el mismo directorio. Esto aplica para pruebas __unitarias__. Para pruebas de __integración__, ahí sí se vuelve a dejar todas las pruebas en un directorio `test`.
+> __IMPORTANTE__: La forma de definir la ubicación de las pruebas difiere algo en caso del Frontend. Es válido considerar que las pruebas se encuentren juntas con el componente que están probando, por lo que el archivo `test.js` que se genere quedará en el mismo directorio. Esto aplica para pruebas __unitarias__. Para pruebas de __integración__, ahí sí se vuelve a dejar todas las pruebas en un directorio `test`.
 
 #### Instalaciones necesarias
 
@@ -2539,7 +2539,7 @@ Con esas instalaciones realizadas, (documentación [aquí](https://testing-libra
   })
   ```
 
-  > NOTA: Al poner `globals: true` permite *omitir* la necesidad de importar palabras clave como `describe`, `test` y `expect` en las pruebas.
+  > __NOTA__: Al poner `globals: true` permite *omitir* la necesidad de importar palabras clave como `describe`, `test` y `expect` en las pruebas.
 
 - Modificar archivo `vite.config.js` para utilizar el setup. Se debe agregar el objeto `test` al archivo para poder indicarlo:
 
@@ -2584,7 +2584,7 @@ test('renders content', () => {
 
 ```
 
-> NOTA: A pesar de que hay distintos métodos para encontrar elementos para su uso en pruebas, el uso de `container` es el más flexible, ya que la función `querySelector()` , que tienen disponible es idénticaa la usada en el desarrollo de una página web.
+> __NOTA__: A pesar de que hay distintos métodos para encontrar elementos para su uso en pruebas, el uso de `container` es el más flexible, ya que la función `querySelector()` , que tienen disponible es idénticaa la usada en el desarrollo de una página web.
 
 o de esta otra forma:
 
@@ -2609,7 +2609,7 @@ test('renders content', () => {
 
 Luego, con el archivo definido, se puede ejecutar la prueba con el comando `npm test`.
 
-> NOTA: Al igual que con las pruebas de backend, es posible usar el flag `--test-name-pattern 'test-name'`  en el comando `npm test --` para filtrar y aplicar solo las pruebas necesarias.
+> __NOTA__: Al igual que con las pruebas de backend, es posible usar el flag `--test-name-pattern 'test-name'`  en el comando `npm test --` para filtrar y aplicar solo las pruebas necesarias.
 
 #### Cobertura de las pruebas (Coverage)
 
@@ -2662,7 +2662,7 @@ test('clicking the button calls event handler once', async () => {
 
 ```
 
-> IMPORTANTE: Considerando que las pruebas buscan probar interacciones de los elementos de una página, es necesario, la mayoría de veces, definir una class al elemento en sí, para poder encontrarlo más fácilmente.
+> __IMPORTANTE__: Considerando que las pruebas buscan probar interacciones de los elementos de una página, es necesario, la mayoría de veces, definir una class al elemento en sí, para poder encontrarlo más fácilmente.
 
 ### Pruebas de Extremo a Extremo (E2E) con Playwright
 
@@ -2711,7 +2711,7 @@ Además, como es un proyecto Node, se deben definir los comandos que permitirán
 }
 ```
 
-> NOTA: La opción `show-report` levanta un servidor local que renderiza una página web con todos los datos compilados de las pruebas realizadas, lo cual se genera con cada ejecución de `playwright test`.
+> __NOTA__: La opción `show-report` levanta un servidor local que renderiza una página web con todos los datos compilados de las pruebas realizadas, lo cual se genera con cada ejecución de `playwright test`.
 
 #### Opciones adicionales para el comando `npm test`
 
@@ -2745,7 +2745,7 @@ En el Frontend, solo se debe levantar la aplicación en modo desarrollo, usando 
 
 #### Configuraciones para Backend
 
-Se debe configurar un nuevo modo de inicio del backend para uso en pruebas. Por tanto, se debe agregar un nuevo script en `package.json`
+Se debe configurar un nuevo modo de inicio del backend para uso en pruebas. Por tanto, se debe agregar un nuevo script en `package.json`. La idea es que la app funcione como en modo productivo, pero apuntando a modo test.
 
 ```json
 {
@@ -2759,6 +2759,48 @@ Se debe configurar un nuevo modo de inicio del backend para uso en pruebas. Por 
 ```
 
 Este modo se debe usar al levantar el backend para las pruebas.
+
+Adicionalmente, es conveniente generar un endpoint que permita limpiar la base de datos de pruebas, antes de realizar cada prueba. Esto se implementa generando un nuevo `controller` el cual responda solo cuando el ambiente utilizado sea el de pruebas:
+
+```js
+const resetRouter = require('express').Router()
+const { User } = require('../models/user')
+const Blog = require('../models/blog')
+
+resetRouter.post('/', async (request, response) => {
+  await Blog.deleteMany({})
+  await User.deleteMany({})
+
+  response.status(204).end()
+})
+
+module.exports = resetRouter
+```
+
+Luego, en `app.js` este endpoint se llama de forma condicional, solo cuando se use el ambiente `testing`:
+
+```js
+// ...
+
+const loginRouter = require('./controllers/login')
+const resetRouter = require('./controllers/reset')
+const { requestLogger, unknownEndpoint, errorHandler, userExtractor } = require('./utils/middleware')
+
+const app = express()
+
+// ...
+app.use('/api/users', usersRouter)
+app.use('/api/blogs', userExtractor, blogsRouter)
+
+if (process.env.NODE_ENV === 'testing') {
+  app.use('/api/reset', resetRouter)
+}
+
+app.use(unknownEndpoint)
+app.use(errorHandler)
+// ...
+
+```
 
 #### Implementación de pruebas
 
@@ -2780,9 +2822,298 @@ describe('Note app', () => {
 
 ```
 
-## Part 6 - Gestión avanzada del estado
+Para más ejemplos de tests realizados, se puede revisar el proyecto [`blogs-frontend`](https://github.com/gus25888/blogs-frontend/tree/main) en el directorio [`blogs-tests`](https://github.com/gus25888/blogs-frontend/tree/main/blogs-tests).
 
-<!-- TODO: rellenar sección -->
+## Part 6 - Gestión avanzada del estado - Uso de Redux
+
+Redux () es una librería que permite la gestión de estado de aplicaciones React de una forma más ordenada, basandose en los siguientes principios:
+
+- __Estado Centralizado__: Se busca centralizar todos las variables de estado de una aplicación en repositorio único de una forma que sea predecible haciendo que sea sencillo seguir y depurar dónde y cuándo se realizó el cambio.
+
+- __Inmutabilidad__: Para lograr que la aplicación sea predecible, se basa en el uso de variables inmutables para gestionar los estados. Esto se aplica haciendo que cada cambio a un objeto o a un array involucre copiar el mismo y luego asignarlo a la variable de estado correspondiente.
+
+Se instala con el comando
+
+Para lograr que estos principios se cumplan se debe seguir unas reglas específicas y generar una forma consistente de definir cada variable de estado y su forma de ser actualizada, y además, hacer que esa actualización afecte a los componentes de la aplicación que corresponda. Esto se logra usando lo siguiente:
+
+- __Acciones__ (Actions): Son objetos planos JS que contienen dos propiedades `type` y `payload`. Se pueden asociar con eventos que describen algo que ocurrió en la aplicación.
+
+  - `type`: Corresponde a la descripción de la acción que se realizará lo que permitirá indicar *qué* es lo que está haciendo el cambio de la variable. Se definen normalmente con un texto en el formato `dominio o Categoria/nombreEvento`. Por ej. en una app que permite tener Listas de Actividades Pendientes (To Do's), un `type` sería el siguiente: `todos/todoAdded`.
+  - `payload`: Corresponde al detalle de los valores que se asignarán a la variable de estado. Siguiendo el ejemplo anterior, el `payload` junto con el `type` sería el siguiente:
+
+    ```js
+    const addTodoAction = {
+      type: 'todos/todoAdded',
+      payload: 'Buy milk'
+    }
+    ```
+
+- __Creadores de acciones__ (Action Creators): Son funciones que permiten "parametrizar" las acciones a crear al permitir enviar el payload y retornar la acción formateada. Ej.:
+
+    ```js
+    const addTodo = text => {
+      return {
+        type: 'todos/todoAdded',
+        payload: text
+      }
+    }
+    ```
+
+  > __NOTA__: Se debe considerar que los `Creadores` deben quedar definidos en conjunto con los `Reductores`, es decir, en el __mismo archivo__.
+
+- __Reductores__ (Reducers): Son funciones que reciben el `estado` de la aplicación y un objeto de `acción` y modifican el `estado` de la aplicación dependiendo de lo recibido. Por ejemplo:
+
+  ```js
+  const counterReducer = (state = 0, action) => {
+    switch (action.type) {
+      case 'INCREMENT':
+        return state + 1
+      case 'DECREMENT':
+        return state - 1
+      case 'ZERO':
+        return 0
+      default: // if none of the above matches, code comes here
+        return state
+    }
+  }
+  ```
+
+  Se basan en las reglas siguientes:
+
+  - Solo hacen los cambios dependiendo del `estado` y la `acción` recibidos.
+  - Solo deben hacer modificaciones a "copias" del `estado` recibido y luego esas deben usarse para actualizar el estado.
+  - Siempre retornarán el `estado` actualizado.
+  - Son funciones puras, que deben ser deterministas en su ejecución, es decir, para los mismos valores enviados siempre deben retornar el mismo resultado.
+
+  > __IMPORTANTE__: Para organización de la estructura del código de la aplicación, quedarán guardados en un directorio llamado `reducers`.
+
+- __Repositorio__ (Store): Es la sección centralizada en donde viven los estados de la aplicación. Son creados al usar la función `createStore` de Redux enviando como parámetro un `Reducer`:
+
+  ```js
+  import { createStore } from 'redux'
+
+  const counterReducer = (state = 0, action) => {
+    // ...
+  }
+
+  const store = createStore(counterReducer)
+  ```
+
+  Para poder obtener el Estado de la aplicación, se debe usar la función `getState()` y para poder modificarlo se usa la función `dispatch()`:
+
+  ```js
+  const store = createStore(counterReducer)
+  console.log(store.getState()) // 0
+  store.dispatch({ type: 'INCREMENT' })
+  store.dispatch({ type: 'INCREMENT' })
+  store.dispatch({ type: 'INCREMENT' })
+  console.log(store.getState()) // 3
+  store.dispatch({ type: 'ZERO' })
+  store.dispatch({ type: 'DECREMENT' })
+  console.log(store.getState()) // -1
+  ```
+
+  Además, existe la función `subscribe()`, que se utiliza para crear funciones callback que el store llama cuando cambia su estado.
+
+  Así, por ejemplo, al añadir la siguiente función, todos los cambios en el store se imprimirían en la consola:
+
+  ```js
+  store.subscribe(() => {
+    const storeNow = store.getState()
+    console.log(storeNow)
+  })
+  ```
+
+  El siguiente código imprimiría automáticamente cualquier cambio al state:
+
+  ```js
+  const store = createStore(counterReducer)
+
+  store.subscribe(() => {
+    const storeNow = store.getState()
+    console.log(storeNow)
+  })
+
+  store.dispatch({ type: 'INCREMENT' })  // 1
+  store.dispatch({ type: 'INCREMENT' }) // 2
+  store.dispatch({ type: 'INCREMENT' }) // 3
+  store.dispatch({ type: 'ZERO' }) // 0
+  store.dispatch({ type: 'DECREMENT' }) // -1
+  ```
+
+> __IMPORTANTE__: Lo descrito anteriormente, en la actualidad no se define de esta manera ya que los desarrolladores de Redux, generaron RTK (Redux Toolkit), el cual realiza la definición de esta estructura de una forma más simplificada usando `configureStore()` en lugar de `createStore()`. Entonces el código anterior de definición, queda así:
+
+```js
+import { configureStore } from '@reduxjs/toolkit'
+
+const store = configureStore({ reducer: counterReducer })
+
+console.log(store.getState()) // {value: 0}
+```
+
+### Librerías asociadas a pruebas de Redux
+
+Como parte de pruebas que se deban realizar dentro de una aplicación que use Redux, se recomienda usar la librería `jest`:
+
+```sh
+npm install --save-dev jest @babel/preset-env @babel/preset-react eslint-plugin-jest`
+```
+
+Luego, se debe generar un archivo `.babelrc`
+
+```babelrc
+{
+  "presets": [
+    "@babel/preset-env",
+    ["@babel/preset-react", { "runtime": "automatic" }]
+  ]
+}
+```
+
+Modificar el archivo `.eslint.config.js`:
+
+```js
+    // ...
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      env: { 'jest/globals': true, }, //Agregar esta línea
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    settings: { react: { version: '18.3' } },
+    plugins: {
+      react,
+      jest, //Agregar esta línea
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    // ...
+```
+
+y agregar el comando `jest` con el nombre `test` a los scripts del `package.json`.
+
+También es relevante separar el reducer en un módulo independiente creado dentro del directorio `reducers`.
+
+Adicionalmente, y con el objetivo de facilitar el poder mantener la inmutabilidad de los objetos de la aplicación, se debe instalar la librería [deep-freeze](https://www.npmjs.com/package/deep-freeze):
+
+```sh
+npm install --save-dev deep-freeze
+```
+
+Para detalles de las pruebas creadas se puede revisar el proyecto `reduxNotesApp` dentro de este repositorio.
+
+### Formularios NO controlados
+
+Se refieren a formularios creados sin asociarlos al state de la aplicación de forma directa.
+
+Sus valores son enviados en conjunto con el submit del Form.
+
+```jsx
+const App = () => {
+  const addNote = (event) => {
+    event.preventDefault()
+    const content = event.target.note.value //Aquí se obtiene el valor del input identificado por "name".
+    event.target.note.value = ''
+    store.dispatch({
+      type: 'NEW_NOTE',
+      payload: {
+        content,
+        important: false,
+        id: generateId()
+      }
+    })
+  }
+
+  const toggleImportance = (id) => {
+    store.dispatch({
+      type: 'TOGGLE_IMPORTANCE',
+      payload: { id }
+    })
+  }
+  return (
+    <div>
+      <form onSubmit={addNote}>
+        <input name="note" />
+        <button type="submit">add</button>
+      </form>
+      <ul>
+        {store.getState().map(note =>
+          <li key={note.id} onClick={() => toggleImportance(note.id)}>
+            {note.content} <strong>{note.important ? 'important' : ''}</strong>
+          </li>
+        )}
+      </ul>
+    </div>
+  )
+}
+```
+
+Tienen la ventaja de que permiten una implementación más "sencilla" que los controlados ( que son los que están asociados a React por `useState()`), pero con ellos no es posible generar validaciones inmediatas en cada input o impedir que se active el botón de envío si no están los datos necesarios especificados.
+
+### Compartir el "store" con los componentes de la aplicación (react-redux)
+
+En Redux, el store, es un repositorio centralizado, por lo que es necesario darle acceso a todos los componentes que manejen algún valor de state para que pueden actualizarlo como estimen conveniente. Para ello existe la librería *react-redux* (`npm install react-redux`) que tiene varios *hooks* disponibles para hacer esta asociación.
+
+Para poder usar los *hooks* se define que el `main.jsx` consistirá de un `Provider` el cual es el contenedor principal de la aplicación y que tiene en sus props el `store`, definido en el mismo módulo:
+
+```jsx
+import ReactDOM from 'react-dom/client'
+import { createStore } from 'redux'
+import { Provider } from 'react-redux'
+
+import App from './App.jsx'
+import noteReducer from '../reducers/noteReducer'
+
+const store = createStore(noteReducer)
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <Provider store={store}>
+    <App />
+  </Provider >
+)
+```
+
+#### Hooks de react-redux: `useSelector`, `useDispatch`
+
+`useDispatch()` o funciones dispatch: Proporciona acceso a cualquier componente de React a la función `dispatch` de redux-store definida en `main.jsx`. Esto permite que todos los componentes realicen cambios en el estado de Redux store.
+
+```jsx
+import { useSelector, useDispatch } from 'react-redux'
+
+const App = () => {
+
+  const dispatch = useDispatch()
+  // ...
+
+  const toggleImportance = (id) => {
+
+    dispatch(toggleImportanceOf(id))
+  }
+
+  // ...
+}
+```
+
+`useSelector()` o funciones de selector: Proporciona el acceso a cualquier componente a los datos almacenados dentro del store. Recibe una función como parámetro, la cual busca o selecciona datos del store de Redux.
+
+```jsx
+import { useSelector, useDispatch } from 'react-redux'
+
+const App = () => {
+  // ...
+
+  const notes = useSelector((state) => {return state})
+  // ...
+}
+```
+
+En este ejemplo, se está la función enviada retorna el state completo. Sin embargo, normalmente, se debe retornar solo lo que realmente necesita el componente.
+
+Con estos dos hooks, es posible realizar la modularización de la aplicación, dejando que cada componente maneje los datos del store que requiera y luego en el componente "App" solo se importan y utilizan.
 
 ## Part 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
 
