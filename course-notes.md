@@ -3115,6 +3115,73 @@ En este ejemplo, se está la función enviada retorna el state completo. Sin emb
 
 Con estos dos hooks, es posible realizar la modularización de la aplicación, dejando que cada componente maneje los datos del store que requiera y luego en el componente "App" solo se importan y utilizan.
 
+### Manejo de estados complejos: uso de `combineReducers`
+
+Dentro de una aplicación, es común tener que manejar varios valores de estado que se relacionan, de forma simúltanea, lo que involucra el uso de varios Reducers.
+
+Para poder abordar esta situación está la función `combineReducers()`. Toma como parámetro, un objeto JS cuyas propiedades corresponderán a los valores del state, y los valores del objeto serán las funciones Reducer a utilizar. Retornará un nuevo reducer que responderá a los eventos de los Reducers enviados, pero como cada uno tiene condiciones distintas solo se activarán cuando estas se cumplan.
+
+Se debe definir como parámetro para el `Provider`, por lo que se generará en donde se encuentre definido.
+
+```jsx
+import ReactDOM from 'react-dom/client'
+import { createStore, combineReducers } from 'redux'
+import { Provider } from 'react-redux'
+
+import App from './App.jsx'
+import noteReducer from './reducers/noteReducer'
+import filterReducer from './reducers/filterReducer'
+
+const reducer = combineReducers({
+  notes: noteReducer,
+  filter: filterReducer
+})
+
+const store = createStore(reducer)
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <Provider store={store}>
+    <App />
+  </Provider >
+)
+
+```
+
+Con esto el state definido contendrá dos propiedades, `notes` y `filter`, las cuales deben ser accedidas de esa manera dentro de cada componente. Por ej. el componente `Notes.jsx` quedará así:
+
+```jsx
+const Notes = () => {
+
+  const dispatch = useDispatch()
+  /*
+    Aquí se extraen del state los valores de filter y notes para su uso directo
+    y permitir filtrar las notas a mostrar dependiendo del filtro elegido.
+  */
+  const notes = useSelector(({ filter, notes }) => {
+    if (filter === 'ALL') {
+      return notes
+    }
+
+    return filter === 'IMPORTANT'
+      ? notes.filter(note => note.important)
+      : notes.filter(note => !note.important)
+  })
+
+  return (
+    <ul>
+      {notes.map(note =>
+        <Note
+          key={note.id}
+          note={note}
+          handleClick={() => dispatch(toggleImportanceOf(note.id))}
+        />
+      )}
+    </ul>
+  )
+}
+
+```
+
 ## Part 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
 
 <!-- TODO: rellenar sección -->
