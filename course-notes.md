@@ -2951,6 +2951,8 @@ const store = configureStore({ reducer: counterReducer })
 console.log(store.getState()) // {value: 0}
 ```
 
+Para más detalle, ver la sección Redux Toolkit
+
 ### Librerías asociadas a pruebas de Redux
 
 Como parte de pruebas que se deban realizar dentro de una aplicación que use Redux, se recomienda usar la librería `jest`:
@@ -3180,6 +3182,108 @@ const Notes = () => {
   )
 }
 
+```
+
+### Redux Toolkit (RTK)
+
+Es una librería que fue desarrollada por los mismos creadores de Redux, con el objetivo de simplificar el proceso de levantar el estado de la aplicación, que implica generar código repetitivo que sigue ciertos patrones para poder implementar las actions, reducers y la interacción con el state. Se instala con `npm install @reduxjs/toolkit`
+
+#### configureStore
+
+Permite crear el Store que contendrá el state de la aplicación y realiza la combinación de los Reducers de forma automática.
+
+```jsx
+import ReactDOM from 'react-dom/client'
+import { Provider } from 'react-redux'
+import { configureStore } from '@reduxjs/toolkit'
+
+import App from './App.jsx'
+import noteReducer from './reducers/noteReducer'
+import filterReducer from './reducers/filterReducer'
+
+const store = configureStore({
+  reducer: {
+    notes: noteReducer,
+    filter: filterReducer
+  }
+})
+
+console.log(store.getState())
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <Provider store={store}>
+    <App />
+  </Provider >
+)
+```
+
+#### createSlice
+
+Permite la creación de los Action Creators y los Reducers de una sola vez
+
+```js
+
+import { createSlice } from '@reduxjs/toolkit'
+
+const initialState = [
+  {
+    content: 'reducer defines how redux store works',
+    important: true,
+    id: 1,
+  },
+  {
+    content: 'state of store can contain any data',
+    important: false,
+    id: 2,
+  },
+]
+
+const generateId = () =>
+  Number((Math.random() * 1000000).toFixed(0))
+
+const noteSlice = createSlice({
+  name: 'notes',
+  initialState,
+  reducers: {
+    createNote(state, action) {
+      const content = action.payload
+      state.push({
+        content,
+        important: false,
+        id: generateId(),
+      })
+    },
+    toggleImportanceOf(state, action) {
+      const id = action.payload
+      const noteToChange = state.find(n => n.id === id)
+      const changedNote = {
+        ...noteToChange,
+        important: !noteToChange.important
+      }
+      return state.map(note =>
+        note.id !== id ? note : changedNote
+      )
+    }
+  },
+})
+
+export const { createNote, toggleImportanceOf } = noteSlice.actions
+export default noteSlice.reducer
+
+```
+
+Se le envía un objeto en que se indica el nombre para poder identificar el reducer creado (`noteSlice.reducer`). Se envía luego el Estado Inicial de la aplicación (`initialState`), y después los Reducers, los cuales se definen como un objeto en que se envía cada función de Action Creator (`createNote` y `toggleImportanceOf`), de lo cual la función `createSlice` se encarga de implementar automáticamente.
+
+> __IMPORTANTE__: Además, es necesario notar que con el uso de `createSlice`, es posible realizar mutaciones directamente en el state, ya que RTK utiliza la librería [Immer](https://immerjs.github.io/immer/) que se encarga de generar una plantilla de la definición de un objeto, llevar los cambios realizados al mismo, y luego retornar una nueva instancia del objeto original con los cambios aplicados, lo cual permite realizar cambios de forma directa asegurando obtener un objeto inmutable cada vez.
+
+##### Consideraciones con console.log con RTK
+
+Considerando el uso de Immer, es necesario hacer una adecuación del state si es necesario mostrarlo por consola. Para ello, se debe usar la función `current` de RTK para poder obtener el estado actual del state.
+
+```js
+import { createSlice, current } from '@reduxjs/toolkit'
+// ...
+console.log(current(state))
 ```
 
 ## Part 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
