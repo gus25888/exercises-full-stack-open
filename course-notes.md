@@ -333,7 +333,7 @@ En caso de que sí venga con un array con algun valor, el cambio de ese valor (o
 
 ### Manejo de datos externos
 
-Por ahora, se visto el uso de la librería *axios* para el manejo de las peticiones necesarias: GET, POST, PUT y DELETE para obtener, crear, actualizar y borrar datos respectivamente.
+Por ahora, se visto el uso de la librería *axios* (`npm install axios`) para el manejo de las peticiones necesarias: GET, POST, PUT y DELETE para obtener, crear, actualizar y borrar datos respectivamente.
 
 Esto se genera dentro del directorio `services`:
 
@@ -426,8 +426,41 @@ const App = (props) => {
         setNotes(notes.filter(note => note.id !== id))
       })
   }
+  //...
+}
 
 ```
+
+#### Uso de json-server
+
+Es una librería que permite generar una instancia de backend de forma automática, basado en un archivo json. Esto permite generar una maqueta preliminar de la forma de acceder a los datos desde el frontend sin necesidad de desarrollar el backend con anterioridad.
+
+Se instala usando el comando `npm i --save-dev json-server`, ya que se debería usar solo como una herramienta para el desarrollo y no en forma productiva.
+
+Para su uso se debe generar un archivo json en la raíz del proyecto, llamado `db.json`, que contenga el listado de los datos a consultar y/o modificar.
+
+Luego, se debe configurar un script adicional en `package.json` llamado `server`:
+
+```json
+
+{
+  // ...
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "lint-fix": "eslint . --fix",
+    "preview": "vite preview",
+    "server": "json-server -p3001 --watch db.json",
+    "test": "vitest run"
+  },
+  // ...
+}
+```
+
+> __NOTA__: Desde la versión 1, se puede omitir el flag `--watch` ya que si json-server se aplica a un solo archivo, automáticamente especifica esa opción.
+
+Con ello, al usar el comando `npm run server`, se podrá tener una instancia backend accesible bajo el puerto 3001.
 
 ### Estilos en React
 
@@ -609,11 +642,7 @@ const requestLogger = (request, response, next) => {
   next()
 }
 
-.
-.
-.
-.
-.
+// ...
 
 // Luego, se llama de este manera:
 app.use(requestLogger)
@@ -2975,11 +3004,13 @@ Luego, se debe generar un archivo `.babelrc`
 Modificar el archivo `.eslint.config.js`:
 
 ```js
+import jest from 'eslint-plugin-jest' //Agregar esta línea
+
+export default [
     // ...
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
-      env: { 'jest/globals': true, }, //Agregar esta línea
+      globals: { ...globals.browser, ...globals.jest }, //Agregar esta línea
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
@@ -2994,6 +3025,7 @@ Modificar el archivo `.eslint.config.js`:
       'react-refresh': reactRefresh,
     },
     // ...
+]
 ```
 
 y agregar el comando `jest` con el nombre `test` a los scripts del `package.json`.
@@ -3191,13 +3223,11 @@ Es una librería que fue desarrollada por los mismos creadores de Redux, con el 
 #### configureStore
 
 Permite crear el Store que contendrá el state de la aplicación y realiza la combinación de los Reducers de forma automática.
+Esto se crea en un archivo independiente en `src/store.js`, importando los reducers a utilizar.
 
 ```jsx
-import ReactDOM from 'react-dom/client'
-import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 
-import App from './App.jsx'
 import noteReducer from './reducers/noteReducer'
 import filterReducer from './reducers/filterReducer'
 
@@ -3208,7 +3238,18 @@ const store = configureStore({
   }
 })
 
-console.log(store.getState())
+export default store
+```
+
+Luego, se importa en `main.jsx`:
+
+```jsx
+import ReactDOM from 'react-dom/client'
+import { Provider } from 'react-redux'
+import { configureStore } from '@reduxjs/toolkit'
+
+import App from './App'
+import store from './store'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Provider store={store}>
@@ -3272,7 +3313,11 @@ export default noteSlice.reducer
 
 ```
 
-Se le envía un objeto en que se indica el nombre para poder identificar el reducer creado (`noteSlice.reducer`). Se envía luego el Estado Inicial de la aplicación (`initialState`), y después los Reducers, los cuales se definen como un objeto en que se envía cada función de Action Creator (`createNote` y `toggleImportanceOf`), de lo cual la función `createSlice` se encarga de implementar automáticamente.
+Se le envía un objeto en que se indica:
+
+- *name*: nombre para poder identificar el reducer creado (`noteSlice.reducer`).
+- *initialState*: Estado Inicial de la aplicación (`initialState`)
+- *reducers*: los cuales se definen como un objeto en que se envía cada función de Action Creator (`createNote` y `toggleImportanceOf`), de lo cual la función `createSlice` se encarga de implementar automáticamente.
 
 > __IMPORTANTE__: Además, es necesario notar que con el uso de `createSlice`, es posible realizar mutaciones directamente en el state, ya que RTK utiliza la librería [Immer](https://immerjs.github.io/immer/) que se encarga de generar una plantilla de la definición de un objeto, llevar los cambios realizados al mismo, y luego retornar una nueva instancia del objeto original con los cambios aplicados, lo cual permite realizar cambios de forma directa asegurando obtener un objeto inmutable cada vez.
 
@@ -3284,6 +3329,188 @@ Considerando el uso de Immer, es necesario hacer una adecuación del state si es
 import { createSlice, current } from '@reduxjs/toolkit'
 // ...
 console.log(current(state))
+```
+
+#### Manejo de datos externos usando RTK
+
+##### Obtención de datos
+
+Para ello, se debe considerar la creación de un `service` que maneje las métodos HTTP que se implementen, usando los métodos ya vistos para ello usando la librería `axios`.
+
+Luego, se debe generar un nuevo Creador de Acción, que permita "inicializar" los datos de la aplicación:
+
+```js
+// ...
+const noteSlice = createSlice({
+  name: 'notes',
+  initialState: [],
+  reducers: {
+    setNotes(state, action) {
+      return action.payload
+    }
+  }
+})
+
+// ...
+```
+
+Luego, este Creador se debe usar dentro de `App.jsx` para obtener los datos y enviarlos al state:
+
+```jsx
+import { useEffect } from "react"
+import { useDispatch } from "react-redux"
+// ...
+import noteService from "./services/notes"
+import { setNotes } from "./reducers/noteReducer"
+
+
+const App = () => {
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+
+    noteService
+      .getAll()
+      .then((notes) => {
+        dispatch(setNotes(notes))
+      })
+  }, [])
+
+  return (
+    </div>
+    // ...
+    </div>
+  )
+}
+
+export default App
+```
+
+Se debe considerar que con este método soporta solo funciones síncronas, (no funciona el `async/await`). Para poder invocar funciones asíncronas, se debe usar Redux Thunk.
+
+##### Creación de datos
+
+Para la creación de datos, se debe realizar el llamado a la función de creación definida dentro del módulo que usa axios, dentro del componente que realizará la creación del registro, que normalmente será un Form.
+
+```jsx
+import { useDispatch } from 'react-redux'
+import { createNote } from '../reducers/noteReducer'
+
+import noteService from '../services/notes'
+
+const NewNote = (props) => {
+  const dispatch = useDispatch()
+
+
+  const addNote = async (event) => {
+    event.preventDefault()
+    const content = event.target.note.value
+    event.target.note.value = ''
+
+    // Aquí se llama a la función que crea el registro en el backend.
+    const newNote = await noteService.createNew(content)
+
+    // El resultado se envía al store, con dispatch y llamando al Action Creator adecuado.
+    dispatch(createNote(newNote))
+  }
+
+  return (
+    <form onSubmit={addNote}>
+      <input name="note" />
+      <button type="submit">add</button>
+    </form>
+  )
+}
+
+export default NewNote
+```
+
+##### Actualización y borrado de datos
+
+Una lógica similar se debe implementar para la actualización o el borrado de datos, es decir, generar una función dentro del componente que realizará la acción correspondiente y generar una función que haga uso de la funcionalidad generada para la comunicación con el backend. Luego, el resultado de la llamada al backend, se envía al Creador de Acción correspondiente.
+
+#### Redux Thunk, para uso de funciones asíncronas con RTK
+
+El enfoque anterior no es el adecuado ya que requiere que las funciones estén embebidas en los componentes, lo cual no es una buena práctica. Por ello, y además, por el impedimento del uso de funciones asíncronas, se usa Redux Thunk.
+
+Esto permite hacer uso de funciones asíncronas dentro de la lógica de Creadores de Acción y, en general, dentro de la gestión de los datos de la store.
+
+Esto viene incluido de forma automática al usar la función `configureStore()` de RTK.
+
+En el contexto de esta librería, *thunk* es una función que envuelve una expresión para demorar su evaluación, por ej:
+
+```js
+// calculation of 1 + 2 is immediate
+// x === 3
+let x = 1 + 2
+
+// calculation of 1 + 2 is delayed
+// foo can be called later to perform the calculation
+// foo is a thunk!
+let foo = () => 1 + 2
+```
+
+Lo que permite Redux Thunk, (que es un middleware agregado a RTK) es hacer que los Creadores de Acción retornen una función (asíncrona) en lugar de un objeto.
+Los parámetros a enviar corresponden a los métodos de `dispatch` y `getState` de Redux.
+
+Por ejemplo, para obtener los datos al iniciar la aplicación se puede generar una función que haga esa tarea dentro del archivo del Reducer, de forma separada de la generación del mismo:
+
+```jsx
+import { createSlice } from "@reduxjs/toolkit"
+import noteService from '../services/notes'
+
+const noteSlice = createSlice( {
+  // ...
+} )
+
+// Funciones asíncronas retornadas para manejar la obtención, creación y actualización de datos:
+export const initializeNotes = () => {
+  return async (dispatch) => {
+    const notes = await noteService.getAll()
+    dispatch(setNotes(notes))
+  }
+}
+
+export const createNote = (content) => {
+  return async (dispatch) => {
+    const newNote = await noteService.createNew(content)
+    dispatch(appendNote(newNote))
+  }
+}
+
+export const updateNote = (note) => {
+  return async (dispatch) => {
+    const noteUpdated = await noteService.updateData(note, note.id)
+    dispatch(toggleImportanceOf(noteUpdated))
+  }
+}
+
+export const { toggleImportanceOf, appendNote, setNotes } = noteSlice.actions
+export default noteSlice.reducer
+```
+
+> __IMPORTANTE__: Considerar que cada función en sí, es síncrona y __RETORNA__ una función asíncrona.
+
+Luego, se invoca cada función generada en el reducer, se utiliza donde corresponde usando dispatch para enviar su resultado al store. Por ej. en `App.jsx` para obtener los datos de la app, se hace dispatch del resultado de la función `initializeNotes()`:
+
+```jsx
+// ...
+import { initializeNotes } from "./reducers/noteReducer"
+
+
+const App = () => {
+  const dispatch = useDispatch()
+
+  useEffect(() => { dispatch(initializeNotes()) }, [])
+
+  return (
+    <div>
+      <NewNote />
+      <VisibilityFilter />
+      <Notes />
+    </div>
+  )
+}
 ```
 
 ## Part 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
