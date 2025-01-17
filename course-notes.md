@@ -3513,6 +3513,190 @@ const App = () => {
 }
 ```
 
+### React Query (o llamada actualmente TanStack Query)
+
+Se instala con el comando `npm install @tanstack/react-query`
+
+Es una [librería](https://tanstack.com/query/latest) enfocada en gestionar el *estado del servidor*, a través de una implementación simple de operaciones asícronas. Se puede pensar que permite generar un caché de los datos del servidor en el frontend.
+
+No se debe considerar como una alternativa a Redux, sino que como un *complemento* a ella, ya que Redux permite el manejo más sencillo de estados propios del frontend como la gestión de los datos de los formularios. Se considera que son librerías de gestión del *estado del cliente*.
+
+A pesar de que Redux, se puede usar para gestiones de datos asíncronos, es más complejo que con React Query.
+
+Para más detalles, se puede ver [este link](https://tanstack.com/query/latest/docs/framework/react/guides/does-this-replace-client-state)
+
+#### Implementación de React Query
+
+Luego, de su instalación y teniendo un módulo que pueda manejar en sendas funciones los diferentes métodos HTTP (GET, POST, etc.), se debe proceder primero disponer de dos funciones necesarias en `main.jsx`: `QueryClient` y `QueryClientProvider`.
+
+```jsx
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient()
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
+)
+```
+
+Luego, en `app.jsx` se debe utilizar dos funciones principales:
+
+- `useQuery()`: Permite indicar un "origen de datos" (operación GET) indicando su nombre identificador, y la función que permite obtener los datos, con las propiedades `queryKey` y `queryFn`.
+
+  Es importante notar que esta función como es asíncrona por defecto, posee la capacidad de realizar consultas por el estado de la obtención de datos, asociados a la variable a la que fue asignada. Por tanto al consultar a las siguientes propiedades se obtendrán distintos resultados:
+
+  - `isPending` or `status === 'pending'` - La "query" no tiene datos aún
+  - `isError` or `status === 'error'` - La "query" tuvo un error
+  - `isSuccess` or `status === 'success'` - La "query" fue exitosa y hay datos disponibles
+
+  Con ello, se pueden generar condiciones para impedir que la aplicación se renderice con los datos, y hacer que muestre información distinta acorde a la situación: Mostrar un mensaje de error si no se encontraron datos, por ejemplo.
+
+- `useMutation()`: Permite definir una función para poder realizar las gestiones del "origen de datos" creado con `useQuery.()`. Se le debe enviar la función que realiza la modificación de los datos (creación, borrado o actualización) en la propiedad `mutationFn` y además, generar una función para el parámetro `onSuccess` que permita definir qué se hará después de realizada la acción definida en mutationFn.
+
+- `useQueryClient()`: Permite gestionar los datos ya obtenidos con `useQuery()` y que se encuentran en el frontend.
+
+```jsx
+
+const App = () => {
+  const queryClient = useQueryClient()
+  // ...
+  const newNoteMutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: (newNote) => {
+      // Esto actualiza el estado de los datos directamente en el frontend sin pedirlos al servidor.
+      const notes = queryClient.getQueryData(['notes'])
+      queryClient.setQueryData(['notes'], notes.concat(newNote))
+    }
+  })
+
+  const updateNoteMutation = useMutation({
+    mutationFn: updateNote,
+    onSuccess: () => {
+      // Esto genera una nueva obtención de datos haciendo una solicitud GET
+      queryClient.invalidateQueries('notes')
+    },
+  })
+
+  // ...
+
+  const result = useQuery({
+    queryKey: ['notes'],
+    queryFn: getNotes
+  })
+  // ...
+}
+```
+
+Para más detalles revisar el archivo `App.jsx` dentro del directorio `query-notes` dentro de este proyecto.
+
+### `useReducer`, para el manejo de estados internos con React Query
+
+`useReducer()` es una de las utilidades de React base, que permite implementar reducers para el manejo de estado. Se recomienda que sean usados cuando alguna variable de estado, es modificada de varias formas distintas (3 o más) y funciona de forma muy similar a los implementados con Redux: se genera una función que recibe state y action, en donde el primero contiene los valores del estado y el segundo indica el tipo de modificación y valores a aplicar a la misma.
+
+```jsx
+
+import { useReducer } from 'react'
+
+const counterReducer = (state, action) => {
+  switch (action.type) {
+    case "INC":
+        return state + 1
+    case "DEC":
+        return state - 1
+    case "ZERO":
+        return 0
+    default:
+        return state
+  }
+}
+
+const App = () => {
+  const [counter, counterDispatch] = useReducer(counterReducer, 0)
+
+  return (
+    <div>
+      <div>{counter}</div>
+      <div>
+        <button onClick={() => counterDispatch({ type: "INC"})}>+</button>
+        <button onClick={() => counterDispatch({ type: "DEC"})}>-</button>
+        <button onClick={() => counterDispatch({ type: "ZERO"})}>0</button>
+      </div>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+Para poder integrar el reducer creado, se usa `useReducer()`, enviando el Reducer y el valor inicial de la variable asociada al state creado. Retorna dos cosas: la variable asociada al `state` y el `dispatch`, que es la función que permite enviar los cambios a realizar a la variable en cuestión.
+
+Al igual que los reducers ya vistos, al usar el `dispatch`, se requiere que se envien dos variables: el `state` actual y la `action` a aplicar. Esta ultima contendrá el valor a aplicar (`payload`) y el tipo de modificación a aplicar (`type`).
+
+#### Usando `context` para evitar el "prop drilling"
+
+La idea de usar Reducers es poder modularizar la aplicación, dejando en archivos separados el reducer de los componentes que lo utilicen. En caso de que se requiera que el state sea usado por un componente, debe venir como parte de sus props. Esto implica que todos los componentes que lo contengan, tendrían potencial acceso a la variable del state, la cual no tienen necesidad de acceder. Esta situación se conoce como *prop drilling*.
+
+Para evitarlo en React, existen los contexts, que corresponden a un tipo de estado global de la aplicación, al que cualquier componente hijo puede tener acceso al definir un state en su padre común sin importar qué tan larga sea la cadena de "herencia".
+
+```jsx
+import { createContext } from 'react'
+
+const CounterContext = createContext()
+
+export default CounterContext
+```
+
+Luego, en el componente padre (para el ejemplo, será App), se hace uso del context creado y se le envían las variables que se disponibilizarán:
+
+```jsx
+import CounterContext from './CounterContext'
+
+const App = () => {
+  const [counter, counterDispatch] = useReducer(counterReducer, 0)
+
+  return (
+    <CounterContext.Provider value={[counter, counterDispatch]}>
+      <Display />
+      <div>
+        <Button type='INC' label='+' />
+        <Button type='DEC' label='-' />
+        <Button type='ZERO' label='0' />
+      </div>
+    </CounterContext.Provider>
+  )
+}
+```
+
+Luego, en el componente correspondiente se llaman con `useContext()`:
+
+```jsx
+import { useContext } from "react"
+import CounterContext from "../CounterContext"
+
+export const Button = ({ type, label }) => {
+  // Se debe considerar que los valores vienen desde un array, por lo que vienen en orden.
+  // Aquí por ej. dispatch es el segundo valor en el array, por lo que se desestructura solo ese valor.
+  const [, dispatch] = useContext(CounterContext)
+
+  return (
+    <button onClick={() => dispatch({ type })}>
+      {label}
+    </button>
+  )
+}
+```
+
+Idealmente, el módulo en que se defina el context debería tener la definición de los estados también. Esto con el objetivo de centralizar las definiciones de estado en donde se van a disponibilizar.
+
+Con ello, es posible realizar las integración del context desde el main.jsx
+
+Para más detalles ver el directorio hook-counter.
+
 ## Part 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
 
 <!-- TODO: rellenar sección -->

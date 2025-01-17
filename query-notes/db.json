@@ -1,0 +1,64 @@
+{
+  "notes": [
+    {
+      "content": "the app state is in redux store",
+      "important": true,
+      "id": "1"
+    },
+    {
+      "content": "state changes are made with actions",
+      "important": true,
+      "id": "2"
+    },
+    {
+      "id": "0211",
+      "content": "Hello Friends!",
+      "important": true
+    },
+    {
+      "id": "7c7f",
+      "content": "ajjajajaja",
+      "important": true
+    },
+    {
+      "id": "ee86",
+      "content": "Hello Friends! number 2",
+      "important": false
+    },
+    {
+      "id": "0720",
+      "content": "ajjajajajacasdas",
+      "important": true
+    },
+    {
+      "id": "2e1d",
+      "content": "Hello Friends!",
+      "important": false
+    },
+    {
+      "id": "a56e",
+      "content": "Hello Friends! number 3",
+      "important": false
+    },
+    {
+      "id": "1bff",
+      "content": "using React Query",
+      "important": false
+    },
+    {
+      "id": "a086",
+      "content": "assss",
+      "important": true
+    },
+    {
+      "id": "64a4",
+      "content": "fg",
+      "important": true
+    },
+    {
+      "id": "9fef",
+      "content": "our new world",
+      "important": true
+    }
+  ]
+}
