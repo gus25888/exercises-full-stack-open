@@ -8,14 +8,14 @@ Usando Vite:
 
 Para npm 6.x (desactualizado, pero aun en uso por algunos):
 
-```command
-npm create vite@latest `projectName` --template react
+```sh
+npm create vite@latest 'projectName' --template react
 ```
 
 npm 7+ (el doble guion adicional, después de `projectName` es necesario):
 
-```command
-npm create vite@latest `projectName` -- --template react
+```sh
+npm create vite@latest 'projectName' -- --template react
 ```
 
 ### Componentes
@@ -35,7 +35,9 @@ const Button = ({ onSmash, text }) => (
 - *Si* no es así, el componente completo se debe rodear de una etiqueta vacía:
 
 ```jsx
-<></>
+<>
+// Aquí irán el resto de etiquetas...
+</>
 ```
 
 - *Además*, dentro del HTML en que se llamará a ese componente, debe renderizarse como un componente autocerrado:
@@ -44,7 +46,7 @@ const Button = ({ onSmash, text }) => (
 <History allClicks={allClicks} />
 ```
 
-- *Deben* estar definidas como una función independiente, es decir, *__NO deben definirse__* dentro de otro componente. El siguiente ejemplo es UN ERROR.
+- *Deben* estar definidas como una función independiente, es decir, *__NO deben definirse__* dentro de otro componente. El siguiente ejemplo es un __ERROR__.
 
 ```jsx
     /* NO DEFINAS COMPONENTES DENTRO DE OTRO COMPONENTE */
@@ -3699,4 +3701,169 @@ Para más detalles ver el directorio hook-counter.
 
 ## Part 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
 
-<!-- TODO: rellenar sección -->
+### React Router
+
+Librería que permite la administración de la navegación en una aplicación React.
+
+Se instalan con el comando:
+
+```sh
+npm install react-router-dom
+```
+
+Para su funcionamiento, la librería se sirve de la API History de HTML5 nativa de los navegadores actuales. Más detalles [aquí](https://css-tricks.com/using-the-html5-history-api/).
+
+```jsx
+
+import {
+  BrowserRouter as Router,
+  Routes, Route, Link
+} from "react-router-dom"
+
+
+// ...
+
+const App = () => {
+
+  const padding = {
+    padding: 5
+  }
+
+  return (
+    <Router>
+      <div>
+        <Link style={padding} to="/">home</Link>
+        <Link style={padding} to="/notes">notes</Link>
+        <Link style={padding} to="/users">users</Link>
+      </div>
+
+      <Routes>
+        <Route path="/notes" element={<Notes />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/" element={<Home />} />
+      </Routes>
+
+      <div>
+        <i>Note app, Department of Computer Science 2024</i>
+      </div>
+    </Router>
+  )
+}
+
+export default App
+
+```
+
+En el ejemplo anterior, se hace uso de `BrowserRouter` que permite generar la definición de las "rutas" de acceso de la aplicación, dentro de la etiqueta `Routes`. Cada `Route` se asocia a un `path` el cual determina el origen al que responderá y luego que `Element` se mostrará al acceder a el.
+
+El elemento `Link` permite definir los path que tendrá la aplicación y a los cuales responderán las Routes. Son elementos "a href" pero con más capacidades de configuración y personalización.
+
+#### Funciones relevantes dentro de React Router
+
+Todas estas funciones se importan desde `react-router-dom`, al igual que en el ejemplo mostrado.
+
+- `useParams`: Hook personalizado que permite tener acceso a todos los params recibidos desde una URL en un formato clave-valor.
+
+```jsx
+
+const Note = ({ notes }) => {
+  // Aquí se obtiene el id de la ruta /notes/:id
+  const id = useParams().id
+  const note = notes.find(n => n.id === Number(id))
+  return (
+    <div>
+      <h2>{note.content}</h2>
+      <div>{note.user}</div>
+      <div><strong>{note.important ? 'important' : ''}</strong></div>
+    </div>
+  )
+}
+```
+
+- `useNavigate`: Hook personalizado que permite navegar en las rutas de la aplicación, de forma personalizada en respuesta a interacciones del usuario.
+
+```jsx
+const Login = (props) => {
+  const navigate = useNavigate()
+
+  const onSubmit = (event) => {
+    event.preventDefault()
+    props.onLogin('mluukkai')
+
+    /*
+      En este punto, al recibir las credenciales del usuario mluukkai,
+      se ingresa al home de la aplicación.
+    */
+    navigate('/')
+  }
+
+  return (
+    <div>
+      <h2>login</h2>
+      <form onSubmit={onSubmit}>
+        <div>
+          username: <input />
+        </div>
+        <div>
+          password: <input type='password' />
+        </div>
+        <button type="submit">login</button>
+      </form>
+    </div>
+  )
+}
+```
+
+- `Navigate`: Componente que permite implementar un comportamiento similar a `useNavigate()`, es decir, redireccionar a una ruta dependiendo de la interacción del usuario. Sin embargo, la documentación recomienda NO usarla y preferir `useNavigate()`
+
+```jsx
+/*
+  En este caso la Route /users está definida condicionalmente:
+  Si se intenta acceder sin sesión (definida por la variable user)
+  se redigirá a la Route de login.
+*/
+  <Routes>
+    <Route path="/notes/:id" element={<Note note={note} />} />
+    <Route path="/notes" element={<Notes notes={notes} />} />
+    <Route path="/users" element={user ? <Users /> : <Navigate replace to="/login" />} />
+    <Route path="/login" element={<Login onLogin={login} />} />
+    <Route path="/" element={<Home />} />
+  </Routes>
+
+```
+
+- `useMatch`: Hook personalizado que permite obtener valores de una URL especifica (la enviada como parámetro a la función) y que responderá cuando se acceda a la ruta enviada.
+
+```jsx
+const App = () => {
+
+  const [notes, setNotes] = useState([
+    // ...
+  ])
+
+
+  const [user, setUser] = useState(null)
+
+  /*
+    En este ejemplo, se obtendrán datos de la URL específica
+    que obtiene una sola nota. Se usa el id obtenido desde ahí
+    para poder buscar y obtener esa única nota buscada.
+  */
+  const match = useMatch('/notes/:id')
+  const note = match
+    ? notes.find(note => note.id === Number(match.params.id))
+    : null
+
+  const login = (user) => {
+    setUser(user)
+  }
+    // ...
+  return (
+    <div>
+    // ...
+    </div>
+  )
+}
+```
+
+Para más detalles revisar el directorio notesAppRouter.
