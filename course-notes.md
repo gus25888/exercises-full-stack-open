@@ -3867,3 +3867,55 @@ const App = () => {
 ```
 
 Para más detalles revisar el directorio notesAppRouter.
+
+### Hooks Personalizados
+
+Una de las grandes ventajas de la especificación de Hooks es la capacidad de poder crear los propios, permitiendo definir "comportamientos" dentro del código, "ocultando" los detalles de cómo se hacen las modificaciones de los datos para visibilizar mejor qué es lo que hacen esos comportamientos.
+
+Para definirlos, se requiere implementar una función cuyo nombre inicie con "use" y que se haga uso de algunos de los Hooks ya definidos por React (useState, useEffect, etc.), además de que NO pueden ser definidos dentro de Ciclos, Condicionales o en Funciones Anidadas. Es posible definirlos de forma independiente en módulos, para aprovecharlos en diferentes lugares de la aplicación.
+
+```jsx
+const useCounter = () => {
+  const [value, setValue] = useState(0)
+
+  const increase = () => { setValue(value + 1) }
+  const decrease = () => { setValue(value - 1) }
+  const zero = () => { setValue(0) }
+
+  return {
+    value,
+    increase,
+    decrease,
+    zero,
+  }
+}
+```
+
+Para usarlos, luego, se deben importar en el componente que lo requiera:
+
+```jsx
+import useCounter from '../hooks/useCounter'
+
+const CounterLR = () => {
+  const left = useCounter()
+  const right = useCounter()
+
+  return (
+    <div>
+
+      <button onClick={left.increase}>
+        left | {left.value}
+      </button>
+      <button onClick={right.increase}>
+        right | {right.value}
+      </button>
+
+    </div>
+  )
+}
+
+```
+
+En este caso, por ej. se muestra que el Hook puede ser utilizado más de una vez, ya que mantiene la misma independencia que los Hooks normales.
+
+Para más detalles revisar el directorio custom-hooks-counter.
