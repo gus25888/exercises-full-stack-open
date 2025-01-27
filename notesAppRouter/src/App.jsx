@@ -4,13 +4,30 @@ import { useState } from 'react'
 import {
   Routes,
   Route,
-  Link,
   Navigate,
-  useParams,
-  useNavigate,
   useMatch,
 } from "react-router-dom"
 
+//* Bootstrap
+// import Notes from './bootstrap-components/Notes'
+// import Login from './bootstrap-components/Login'
+// import Notification from './bootstrap-components/Notification'
+// import Menu from './bootstrap-components/Menu'
+
+//* Material UI
+// import { Container } from '@mui/material'
+// import Notes from './material_ui-components/Notes'
+// import Login from './material_ui-components/Login'
+// import Notification from './material_ui-components/Notification'
+// import Menu from './material_ui-components/Menu'
+
+
+//* Styled-components
+import { Page, Footer, } from './styled_components-components/styles'
+import Notes from './styled_components-components/Notes'
+import Login from './styled_components-components/Login'
+import Menu from './styled_components-components/Menu'
+import Notification from './styled_components-components/Notification'
 
 const Home = () => (
   <div>
@@ -20,8 +37,6 @@ const Home = () => (
 )
 
 const Note = ({ note }) => {
-  // const id = useParams().id
-  // const note = notes.find(n => n.id === Number(id))
   return (
     <div>
       <h2>{note.content}</h2>
@@ -31,18 +46,6 @@ const Note = ({ note }) => {
   )
 }
 
-const Notes = ({ notes }) => (
-  <div>
-    <h2>Notes</h2>
-    <ul>
-      {notes.map(note =>
-        <li key={note.id}>
-          <Link to={`/notes/${note.id}`}>{note.content}</Link>
-        </li>
-      )}
-    </ul>
-  </div>
-)
 
 const Users = () => (
   <div>
@@ -55,30 +58,6 @@ const Users = () => (
   </div>
 )
 
-const Login = (props) => {
-  const navigate = useNavigate()
-
-  const onSubmit = (event) => {
-    event.preventDefault()
-    props.onLogin('mluukkai')
-    navigate('/')
-  }
-
-  return (
-    <div>
-      <h2>login</h2>
-      <form onSubmit={onSubmit}>
-        <div>
-          username: <input />
-        </div>
-        <div>
-          password: <input type='password' />
-        </div>
-        <button type="submit">login</button>
-      </form>
-    </div>
-  )
-}
 
 const App = () => {
 
@@ -105,6 +84,7 @@ const App = () => {
 
 
   const [user, setUser] = useState(null)
+  const [message, setMessage] = useState(null)
 
   const match = useMatch('/notes/:id')
   const note = match
@@ -113,24 +93,64 @@ const App = () => {
 
   const login = (user) => {
     setUser(user)
+    setMessage(`welcome ${user}`)
+    setTimeout(() => {
+      setMessage(null)
+    }, 10000)
   }
 
-  const padding = {
-    padding: 5
-  }
+
+  //* Bootstrap
+
+  // return (
+  //   <div className='container'>
+  //     <Notification message={message} />
+  //     <Menu user={user} />
+
+  //     <Routes>
+  //       <Route path="/notes/:id" element={<Note note={note} />} />
+  //       <Route path="/notes" element={<Notes notes={notes} />} />
+  //       <Route path="/users" element={user ? <Users /> : <Navigate replace to="/login" />} />
+  //       <Route path="/login" element={<Login onLogin={login} />} />
+  //       <Route path="/" element={<Home />} />
+  //     </Routes>
+
+  //     <footer>
+  //       <br />
+  //       <em>Note app, Department of Computer Science 2024</em>
+  //     </footer>
+  //   </div>
+  // )
+
+
+  //* Material UI
+
+  // return (
+  //   <Container>
+  //     <Notification message={message} />
+  //     <Menu user={user} />
+
+  //     <Routes>
+  //       <Route path="/notes/:id" element={<Note note={note} />} />
+  //       <Route path="/notes" element={<Notes notes={notes} />} />
+  //       <Route path="/users" element={user ? <Users /> : <Navigate replace to="/login" />} />
+  //       <Route path="/login" element={<Login onLogin={login} />} />
+  //       <Route path="/" element={<Home />} />
+  //     </Routes>
+
+  //     <footer>
+  //       <br />
+  //       <em>Note app, Department of Computer Science 2024</em>
+  //     </footer>
+  //   </Container>
+  // )
+
+  //* Styled-Components
 
   return (
-    <div>
-      <div>
-        <Link style={padding} to="/">home</Link>
-        <Link style={padding} to="/notes">notes</Link>
-        <Link style={padding} to="/users">users</Link>
-        {user
-          ? <em>{user} logged in</em>
-          : <Link style={padding} to="/login">login</Link>
-        }
-      </div>
-
+    <Page>
+      <Notification message={message} />
+      <Menu user={user} />
       <Routes>
         <Route path="/notes/:id" element={<Note note={note} />} />
         <Route path="/notes" element={<Notes notes={notes} />} />
@@ -139,12 +159,12 @@ const App = () => {
         <Route path="/" element={<Home />} />
       </Routes>
 
-      <footer>
-        <br />
-        <em>Note app, Department of Computer Science 2024</em>
-      </footer>
-    </div>
+      <Footer>
+        <em>Note app, Department of Computer Science 2022</em>
+      </Footer>
+    </Page>
   )
+
 }
 
 export default App

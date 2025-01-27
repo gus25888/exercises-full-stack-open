@@ -3,9 +3,15 @@ import {
   Routes, Route, Link
 } from 'react-router-dom'
 
-import Home from './components/Home'
-import Notes from './components/Notes'
-import Users from './components/Users'
+const Home = () => (
+  <div> <h2>TKTL notes app</h2> </div>
+)
+const Users = () => (
+  <div> <h2>Users</h2> </div>
+)
+const Notes = () => (
+  <div> <h2>Notes</h2> </div>
+)
 
 const App = () => {
 

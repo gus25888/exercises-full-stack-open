@@ -3872,7 +3872,11 @@ Para más detalles revisar el directorio notesAppRouter.
 
 Una de las grandes ventajas de la especificación de Hooks es la capacidad de poder crear los propios, permitiendo definir "comportamientos" dentro del código, "ocultando" los detalles de cómo se hacen las modificaciones de los datos para visibilizar mejor qué es lo que hacen esos comportamientos.
 
-Para definirlos, se requiere implementar una función cuyo nombre inicie con "use" y que se haga uso de algunos de los Hooks ya definidos por React (useState, useEffect, etc.), además de que NO pueden ser definidos dentro de Ciclos, Condicionales o en Funciones Anidadas. Es posible definirlos de forma independiente en módulos, para aprovecharlos en diferentes lugares de la aplicación.
+Para definirlos, se requiere implementar una función cuyo nombre inicie con "use" y que se haga uso de algunos de los Hooks ya definidos por React (useState, useEffect, etc.).
+
+Se debe considerar que NO pueden ser definidos dentro de Ciclos, Condicionales o en Funciones Anidadas.
+
+Además, es posible definirlos de forma independiente en módulos, para aprovecharlos en diferentes lugares de la aplicación.
 
 ```jsx
 const useCounter = () => {
@@ -3919,3 +3923,247 @@ const CounterLR = () => {
 En este caso, por ej. se muestra que el Hook puede ser utilizado más de una vez, ya que mantiene la misma independencia que los Hooks normales.
 
 Para más detalles revisar el directorio custom-hooks-counter.
+
+### Librerías para la integración de estilos en React
+
+Existen muchas librerías que permiten realizar estas tareas, por lo que se ha enfocado en las dos más populares, *Bootstrap* y *Material UI*. También se menciona una adicional llamada *styled-components* que tiene un enfoque distinto, al basarse en las [plantillas literales etiquetadas](https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Template_literals#plantillas_etiquetadas) para agregar CSS a la aplicación.
+
+#### React Bootstrap
+
+Se instala con el comando `npm install react-bootstrap`.
+
+Para implementarse, primero debe agregarse el archivo CSS que contiene todas las reglas definidas para el estilo Bootstrap. Esto se agrega en el archivo `index.html` ubicado en la raíz del proyecto:
+
+```html
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+
+
+  <!-- Agregar esta línea -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous" />
+
+
+
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + React</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>
+
+```
+
+Este archivo se encuentra alojado en un CDN, lo cual permite evitar tener inconsistencias de versiones y además de evitar tener que manejar un CDN propio.
+
+Luego, se debe agregar la clase `container` al div generado para alojar el contenido de la aplicación, ubicado dentro de `App.jsx`:
+
+```jsx
+const App = () => {
+  // ...
+
+  return (
+    <div className='container'> /* Agregar className container */
+      <Notification message={message} />
+      <Menu user={user} />
+
+      <Routes>
+        <Route path="/notes/:id" element={<Note note={note} />} />
+        <Route path="/notes" element={<Notes notes={notes} />} />
+        <Route path="/users" element={user ? <Users /> : <Navigate replace to="/login" />} />
+        <Route path="/login" element={<Login onLogin={login} />} />
+        <Route path="/" element={<Home />} />
+      </Routes>
+
+      <footer>
+        <br />
+        <em>Note app, Department of Computer Science 2024</em>
+      </footer>
+    </div>
+  )
+}
+```
+
+Luego, se debe importar el componente CSS de Bootstrap que se ha adaptado para ser un componente React, en el módulo a implementar. Por ej.: este componente para generar las Notificaciones de la aplicación.
+
+```jsx
+import Alert from 'react-bootstrap/Alert'
+
+const Notification = ({ message }) => (
+  <div>
+    {
+      (message && <Alert variant='success'>{message}</Alert>)
+    }
+  </div>
+)
+```
+
+Cosas a notar:
+
+- Se recomienda importar el componente especifico a utilizar en el módulo, en lugar de importar la librería completa (`import {Alert} from 'react-bootstrap'`), ya que genera una menor carga en el archivo a enviar al cliente.
+- Cada componente Bootstrap tiene diferentes atributos (`variant`) que permiten implementar aspectos distintos al componente, dependiendo del valor que se les asigne.
+
+Para más ejemplos, se pueden revisar los componentes creados en `notesAppRouter\src\bootstrap-components`.
+
+Para más detalles, se encuentra la [documentación](https://react-bootstrap.github.io/docs/getting-started/introduction) de la librería, la cual contiene el detalle de los componentes que existen y como se usan.
+
+#### Material UI
+
+Se instala con el comando `npm install @mui/material @emotion/react @emotion/styled`.
+
+Para usarlo, se debe modificar el div contenedor de `App.jsx` al componente `Container`:
+
+```jsx
+const App = () => {
+  // ...
+
+  return (
+    <Container>
+      <Notification message={message} />
+      <Menu user={user} />
+
+      <Routes>
+        <Route path="/notes/:id" element={<Note note={note} />} />
+        <Route path="/notes" element={<Notes notes={notes} />} />
+        <Route path="/users" element={user ? <Users /> : <Navigate replace to="/login" />} />
+        <Route path="/login" element={<Login onLogin={login} />} />
+        <Route path="/" element={<Home />} />
+      </Routes>
+
+      <footer>
+        <br />
+        <em>Note app, Department of Computer Science 2024</em>
+      </footer>
+    </Container>
+  )
+}
+```
+
+Luego, se debe importar el componente CSS de Material UI que se ha adaptado para ser un componente React, en el módulo a implementar. Por ej.: este componente para generar las Notificaciones de la aplicación.
+
+```jsx
+import Alert from '@mui/material/Alert'
+
+const Notification = ({ message }) => (
+  <div>
+    {
+      (message && <Alert severity='success'>{message}</Alert>)
+    }
+  </div>
+)
+```
+
+Cosas a notar:
+
+- A diferencia de Bootstrap, no es necesario importar el archivo CSS en `index.html`
+- Se debe importar el componente especifico a utilizar en el módulo: `import Alert from '@mui/material/Alert'`
+- Cada componente de Material UI, tiene diferentes atributos (`severity`) que permiten implementar aspectos distintos al componente, dependiendo del valor que se les asigne.
+
+Para más ejemplos, se pueden revisar los componentes creados en `notesAppRouter\src\material_ui-components`.
+
+Para más detalles, se encuentra la [documentación](https://mui.com/material-ui/getting-started/) de la librería, la cual contiene el detalle de los componentes que existen y como se usan.
+
+#### Styled-Components
+
+Se instala con el comando `npm install styled-components`.
+
+Para usarlo, se debe generar un archivo JS con objetos que contengan las definiciones de CSS en formato de texto plano, usando la referencia a la función `styled` de `styled-components`:
+
+```js
+import styled from 'styled-components'
+
+const Button = styled.button`
+  background: Bisque;
+  font-size: 1em;
+  margin: 1em;
+  padding: 0.25em 1em;
+  border: 2px solid Chocolate;
+  border-radius: 3px;
+`
+
+const Input = styled.input`
+  margin: 0.25em;
+`
+
+const Page = styled.div`
+  padding: 1em;
+  background: papayawhip;
+`
+
+const Navigation = styled.div`
+  background: BurlyWood;
+  padding: 1em;
+`
+
+const Footer = styled.div`
+  background: Chocolate;
+  padding: 1em;
+  margin-top: 1em;
+`
+
+export {
+  Button,
+  Input,
+  Page,
+  Navigation,
+  Footer,
+}
+```
+
+Luego, estas variables de tipo Componente, se usan en el componente correspondiente. Por ej.:
+
+```jsx
+const App = () => {
+  // ...
+  return (
+    <Page>
+      <Notification message={message} />
+      <Menu user={user} />
+      <Routes>
+        <Route path="/notes/:id" element={<Note note={note} />} />
+        <Route path="/notes" element={<Notes notes={notes} />} />
+        <Route path="/users" element={user ? <Users /> : <Navigate replace to="/login" />} />
+        <Route path="/login" element={<Login onLogin={login} />} />
+        <Route path="/" element={<Home />} />
+      </Routes>
+
+      <Footer>
+        <em>Note app, Department of Computer Science 2022</em>
+      </Footer>
+    </Page>
+  )
+}
+
+
+// ...
+
+import { Link } from "react-router-dom"
+import { Navigation } from "./styles"
+
+const Menu = ({ user }) => {
+  const padding = {
+    padding: 5
+  }
+  return (
+    <Navigation>
+      <Link style={padding} to="/">home</Link>
+      <Link style={padding} to="/notes">notes</Link>
+      <Link style={padding} to="/users">users</Link>
+      {user
+        ? <em>{user} logged in</em>
+        : <Link style={padding} to="/login">login</Link>
+      }
+    </Navigation>
+  )
+}
+
+export default Menu
+```
