@@ -1,24 +1,30 @@
 # Notas de Curso FullStack
 
+---
+
 ## Part 1 - *Introducción* a React
+
+---
 
 ### Creacion de app
 
+---
+
 Usando Vite:
 
-Para npm 6.x (desactualizado, pero aun en uso por algunos):
-
 ```sh
+# Para npm 6.x (desactualizado, pero aun en uso por algunos):
 npm create vite@latest 'projectName' --template react
 ```
 
-npm 7+ (el doble guion adicional, después de `projectName` es necesario):
-
 ```sh
+# Para npm 7+ (el doble guion adicional, después de `projectName` es necesario):
 npm create vite@latest 'projectName' -- --template react
 ```
 
 ### Componentes
+
+---
 
 Son funciones JS que definen un conjunto de etiquetas HTML los cuales se utilizan luego en la aplicación para mostrar valores llamados props.
 
@@ -30,9 +36,11 @@ const Button = ({ onSmash, text }) => (
 
 #### Consideraciones respecto a los componentes
 
-- *Deben* definirse con mayúscula inicial. Esto también aplica si son definidos como un archivo separado, el cual debe nombrarse igual.
-- *Deben* retornar un HTML válido que tenga etiquetas de apertura y cierre, como __div__.
-- *Si* no es así, el componente completo se debe rodear de una etiqueta vacía:
+---
+
+- *__Deben__* definirse con mayúscula inicial. Esto también aplica si son definidos como un archivo separado, el cual debe nombrarse igual.
+- *__Deben__* retornar un HTML válido que tenga etiquetas de apertura y cierre, como __div__.
+- Si no es así, el componente completo se *__debe__* rodear de una etiqueta vacía:
 
 ```jsx
 <>
@@ -40,13 +48,13 @@ const Button = ({ onSmash, text }) => (
 </>
 ```
 
-- *Además*, dentro del HTML en que se llamará a ese componente, debe renderizarse como un componente autocerrado:
+- Además, dentro del HTML en que se llamará a ese componente, *__debe__* renderizarse como un componente autocerrado:
 
 ```jsx
 <History allClicks={allClicks} />
 ```
 
-- *Deben* estar definidas como una función independiente, es decir, *__NO deben definirse__* dentro de otro componente. El siguiente ejemplo es un __ERROR__.
+- *__Deben__* estar definidas como una función independiente, es decir, __NO__ deben definirse dentro de otro componente. El siguiente ejemplo es un __ERROR__.
 
 ```jsx
     /* NO DEFINAS COMPONENTES DENTRO DE OTRO COMPONENTE */
@@ -73,7 +81,7 @@ const Button = ({ onSmash, text }) => (
 
 ```
 
-- *Las* funciones usadas al llamar a un componente, deben ser la referencia de la misma, es decir solo su nombre. Por ejemplo:
+- Las funciones usadas al llamar a un componente, *__deben__* ser la referencia de la misma, es decir solo su nombre. Por ejemplo:
 
 ```jsx
 <Button handleClick={clickIncrement} text="increment" />
@@ -87,10 +95,10 @@ En caso de que se necesite enviar parámetros a la función, se puede agregar un
 
 #### *Props*
 
+---
+
 Las props corresponden a valores que se pueden pasar al componente al usarlo.
-Dentro de la etiqueta HTML (que tendrá el nombre de la función, ej. History)
-se indica la variable que se quiera enviar seguida de un igual entre llaves,
-con el valor a usar, el cual puede ser un primitivo, un objeto, o una función.
+Dentro de la etiqueta HTML (que tendrá el nombre de la función, ej. `History`) se indica la variable que se quiera enviar seguida de un igual entre llaves, con el valor a usar, el cual puede ser un primitivo, un objeto, o una función.
 
 ```jsx
 
@@ -151,6 +159,8 @@ const App = () => {
 
 ### useState (Hook de Estado): Manejo del estado del componente
 
+---
+
 Permite asociar una variable y su función correspondiente a un componente, lo cual permite hacer modificaciones a la forma en que se comporta.
 
 ```jsx
@@ -186,10 +196,12 @@ También, como parte de buenas prácticas se recomienda definir componentes pequ
 
 ### Consideraciones generales con los hooks (Funciones React que inician con "use")
 
+---
+
 - *NO* se deben llamar dentro de loops, ifs o subfunciones. Solo se deben llamar desde dentro de la función que define un componente de React.
 - *En* caso de tener que manejar varios estados, deben privilegiarse su manejo de forma separada.
-- *Se* requiere generar SIEMPRE copias de la información antes de guardarla como datos. Las actualizaciones de valores ocurren de forma asíncrona, por lo que el valor de una variable no puede ser modificado directamente, sino que se debe usar una variable separada que tenga el valor actualizado y luego ese usar para generar la modificación a través de la función asociada al generar el useState.
-Por ejemplo, en el fragmento siguiente se genera la variable *updatedLeft* para ello.
+- *Se* requiere generar __SIEMPRE__ copias de la información antes de guardarla como datos. Las actualizaciones de valores ocurren de forma asíncrona, por lo que el valor de una variable no puede ser modificado directamente, sino que se debe usar una variable separada que tenga el valor actualizado y luego ese usar para generar la modificación a través de la función asociada al generar el useState.
+Por ejemplo, en el fragmento siguiente se genera la variable `updatedLeft` para ello.
 
 ```jsx
 const App = () => {
@@ -261,6 +273,8 @@ const App = () => {
 
 ### Controladores de Eventos
 
+---
+
 Es la denominación que tienen las funciones asociadas a los eventos que ocurren en los diferentes elementos HTML.
 
 Por ejemplo, un __*button*__ tiene la capacidad de recibir clicks, por lo que tiene un evento asociado __*onClick*__.
@@ -288,11 +302,15 @@ const App = () => {
 
 > __NOTA__: Es recomendado por React que las funciones asociadas a controladores de Eventos, se denominen handle*Event*
 
-_________________________________________________________________________________________________________________________
+---
 
 ## Part 2 - *Comunicandose* con el servidor
 
+---
+
 ### Renderizado de múltiples elementos
+
+---
 
 Para el renderizado de elementos que son múltiples, se puede usar __map__ para "envolverlos" en la etiqueta correspondiente.
 
@@ -311,6 +329,8 @@ Para el renderizado de elementos que son múltiples, se puede usar __map__ para 
 
 ### Implementación de formularios
 
+---
+
 Para la implementación de Formularios se debe generar asociación del mismo con el State de la app
 considerando que cada input o elemento que se requiere monitorear por cambios,
 debe tener una inicialización como una variable en el State asociado a su "value".
@@ -325,6 +345,8 @@ Ej.:
 
 ### useEffect (Hook de Efecto) para manejar datos externos a la aplicación
 
+---
+
 Para poder obtener datos (y sincronizarlos) desde una entidad externa (llamada HTTP, por ej.) en un componente, se debe usar un Hook de tipo Efecto (useEffect).
 
 Recibe dos parámetros:
@@ -334,6 +356,8 @@ Recibe dos parámetros:
 En caso de que sí venga con un array con algun valor, el cambio de ese valor (o valores) realizará un nuevo renderizado del efecto.
 
 ### Manejo de datos externos
+
+---
 
 Por ahora, se visto el uso de la librería *axios* (`npm install axios`) para el manejo de las peticiones necesarias: GET, POST, PUT y DELETE para obtener, crear, actualizar y borrar datos respectivamente.
 
@@ -435,6 +459,8 @@ const App = (props) => {
 
 #### Uso de json-server
 
+---
+
 Es una librería que permite generar una instancia de backend de forma automática, basado en un archivo json. Esto permite generar una maqueta preliminar de la forma de acceder a los datos desde el frontend sin necesidad de desarrollar el backend con anterioridad.
 
 Se instala usando el comando `npm i --save-dev json-server`, ya que se debería usar solo como una herramienta para el desarrollo y no en forma productiva.
@@ -465,6 +491,8 @@ Luego, se debe configurar un script adicional en `package.json` llamado `server`
 Con ello, al usar el comando `npm run server`, se podrá tener una instancia backend accesible bajo el puerto 3001.
 
 ### Estilos en React
+
+---
 
 - *De* forma separada:
 
@@ -516,19 +544,23 @@ Con ello, al usar el comando `npm run server`, se podrá tener una instancia bac
         )
     ```
 
+---
+
 ## Part 3 - *Programando* un servidor con NodeJS y Express
+
+---
 
 ### Express
 
+---
+
 Libreria usada para la generación de endpoints (GET, POST, PUT, PATCH) que permiten la consulta de información a la fuente de almacenamiento de datos, como una base de datos o realizar cargas de archivos, entre muchas otras tareas.
 
-Se instala usando npm
-
-```sh
-npm i express
-```
+Se instala usando npm: `npm i express`
 
 #### Uso básico
+
+---
 
 ```js
 const express = require('express')
@@ -615,6 +647,8 @@ app.listen(PORT, () => {
 
 #### Nodemon y su uso en desarrollo
 
+---
+
 Nodemon es un package que permite el reinicio de la aplicación cada vez que se detecta algún cambio en su código.
 
 Como tal, este comportamiento, solo se requiere en ambiente de desarrollo, por lo que en su instalación se considera eso:
@@ -624,6 +658,8 @@ npm i nodemon --save-dev
 ```
 
 ### Uso de Middlewares
+
+---
 
 Son funciones usadas para manejar objetos de request (datos de la solicitud HTTP) y response (datos de la respuesta a la solicitud realizada).
 
@@ -669,6 +705,8 @@ app.use(unknownEndpoint)
 
 ### CORS (Cross Origin Resource Sharing)
 
+---
+
 Parte de la implementación del protocolo HTTP dentro de los navegadores es permitir solo conexiones del mismo origen. En este caso, origen se refiere al conjunto de protocolo, host y puerto.
 
 ```http
@@ -700,6 +738,8 @@ app.use(cors())
 
 ### Archivos Estáticos
 
+---
+
 Express tiene la capacidad de responder a requests que necesiten archivos físicos. Esto permite levantar el __frontend__ desde el mismo servidor de backend.
 
 Para lograrlo, primero se debe copiar el directorio `dist` generado desde el frontend, el cual contiene los archivos que componen la app dentro de la raíz del backend. Este directorio se genera al ocupar el comando `build`:
@@ -717,6 +757,8 @@ app.use(express.static('dist'))
 ```
 
 ### Proxy
+
+---
 
 Como en este caso, el servidor frontend espera que la comunicación se realice por el puerto 5173 para obtener los recursos necesarios para poder obtener los datos que renderiza. Por tanto, como el backend responde en el puerto 3001, se debe indicar esa situación para que así Vite redirija las solicitudes a la ruta *api* hacia el puerto correcto.
 
@@ -739,6 +781,8 @@ export default defineConfig({
 
 ### Despliegue de la app a internet
 
+---
+
 Se usa un servicio cloud como fly.io
 
 Dentro se debe configurar la aplicación backend (en primera instancia) con los cambios para que pueda servir archivos estáticos.
@@ -756,15 +800,23 @@ fly scale count 1 (Para disminuir a 1 la cantidad de máquinas generadas por el 
 
 ### Depurar aplicaciones
 
+---
+
 #### Frontend
+
+---
 
 Uso de la sentencia `debugger;` en cualquier punto del código, pausará la ejecución y permitirá revisar el estado y valor de las variables de la aplicación en ese momento.
 
 #### Backend
 
+---
+
 Uso del comando `node --inspect file.js` o `nodemon --inspect file.js` para permitir la misma revisión que con debugger.
 
 ### Uso de MongoDB como repositorio de datos
+
+---
 
 En MongoDB, los datos se guardan de forma no relacional identificados por un campo unico (_id) en Documents. Los Documentos pueden contener cualquier valor, asociado a una clave en una estructura similar a un objeto JS.
 
@@ -773,6 +825,8 @@ Un conjunto de Documentos se agrupan en Colecciones. La base de datos finalmente
 Se recomienda el uso del paquete `mongoose` (`npm install mongoose`) para realizar la conexión y gestión de datos de una BD Mongo, por su capa de abstracción (APIs) que facilita el manejo de la información.
 
 ### Uso de mongoose
+
+---
 
 Para la gestión con Mongoose, se usa los `schemas` para determinar el formato que tendrán los Documentos, indicando el nombre de cada clave y el tipo de dato que almacenará. Siempre deben contar con una clave `id` para su identificación.
 
@@ -818,6 +872,8 @@ module.exports = mongoose.model('Note', noteSchema);
 
 #### CRUD con mongoose
 
+---
+
 Para poder manejar esto, primero se debe generar una instancia del modelo definido para el Documento:
 
 ```js
@@ -840,6 +896,8 @@ Con el modelo definido, se puede instanciar para su uso.
 
 ##### Obtención de varios
 
+---
+
 ```js
 app.get('/api/notes', (request, response, next) => {
     Note
@@ -858,6 +916,8 @@ app.get('/api/notes', (request, response, next) => {
 
 ##### Obtención de uno
 
+---
+
 ```js
 app.get('/api/notes/:id', (request, response, next) => {
     Note
@@ -874,6 +934,8 @@ app.get('/api/notes/:id', (request, response, next) => {
 ```
 
 ##### Creación
+
+---
 
 ```js
 app.post('/api/notes', (request, response, next) => {
@@ -899,21 +961,23 @@ app.post('/api/notes', (request, response, next) => {
 
 ##### Actualización
 
+---
+
 ```js
 app.put('/api/notes/:id', (request, response, next) => {
     const body = request.body;
 
     /*
-    * Se genera un objeto plano con el nuevo contenido de la nota.
-    * NO SE USA una nueva instancia de Note para esto.
-    * Requiere:
-    *   id Documento,
-    *   nuevos valores a modificar
-    *   opciones:
-    *       new: true,           indica que el resultado de la operacion retornará la nota actualizada.
-    *       runValidators: true, indica que se utilizará las validaciones definidas en el Schema
-    *       context: 'query',    permite indicar que el contexto de la validacion afecta solo a esta operación.
-    */
+  Se genera un objeto plano con el nuevo contenido de la nota.
+  NO SE USA una nueva instancia de Note para esto.
+  Requiere:
+    id Documento,
+    nuevos valores a modificar
+    opciones:
+        new: true,           indica que el resultado de la operacion retornará la nota actualizada.
+        runValidators: true, indica que se utilizará las validaciones definidas en el Schema
+        context: 'query',    permite indicar que el contexto de la validacion afecta solo a esta operación.
+
     const note = {
         content: body.content,
         important: body.important
@@ -930,6 +994,8 @@ app.put('/api/notes/:id', (request, response, next) => {
 
 ##### Borrado
 
+---
+
 ```js
 app.delete('/api/notes/:id', (request, response, next) => {
     Note
@@ -940,6 +1006,8 @@ app.delete('/api/notes/:id', (request, response, next) => {
 ```
 
 ### Variables de entorno
+
+---
 
 Para la conexión de BD, es necesario que la URL de conexión esté guardada de forma separada y que __no__ sea respaldada en github.
 
@@ -964,6 +1032,8 @@ const url = process.env.MONGODB_URI
 Esto aplica para cualquier valor externo a la aplicación y que debe estar fuera del código fuente.
 
 ### Manejo de errores en Express
+
+---
 
 En express es posible definir middlewares de errores, los cuales son invocados desde cualquier endpoint usando la función next() y pasando el objeto de error como parámetro. La función next, se debe agregar como parámetro a cada endpoint.
 
@@ -990,11 +1060,7 @@ app.get('/api/notes/:id', (request, response, next) => {
         .catch(error => next(error))
 })
 
-    .
-    .
-    .
-    .
-    .
+// ...
 
 const errorHandler = (error, request, response, next) => {
     console.error(error.message)
@@ -1018,6 +1084,8 @@ app.listen(PORT, () => {
 ```
 
 ### Validaciones en Mongoose
+
+---
 
 Las validaciones en Mongoose, se definen como parte del esquema. Existen validaciones integradas y personalizadas.
 
@@ -1046,6 +1114,8 @@ const personSchema = new mongoose.Schema({
 
 ### Lint
 
+---
+
 Consiste en una herramienta de análisis estático de software que detecta y marca errores de sintaxis, uso y estilo del código.
 Ayuda a detectar errores de forma temprana en el código, antes de que se lleven a la ejecución y permite mantener una consistencia en la definición de los elementos que componen el código, por ej. la cantidad de espacio usado para separar las líneas de una función u objeto, el uso de punto y coma para las sentencias, entre muchas otras definiciones.
 
@@ -1061,9 +1131,15 @@ Este ultimo comando (`npx eslint --init`) genera un archivo `eslint.config.js`, 
 
 Las reglas a usar en el archivo obtenido se pueden obtener desde [aqui](<https://eslint.org/docs/latest/rules/>) en el caso de las *normales* y para las *stylistics* [aquí](<https://eslint.style/packages/js>)
 
+---
+
 ## Part 4 - *Probando* servidores Express, administración de usuarios
 
+---
+
 ### Estructura del proyecto backend
+
+---
 
 La forma de organizar los archivos considera la siguiente estructura propuesta, la cual se encuentra basada en las mejores prácticas definidas para backends desarrollados usando Express:
 
@@ -1103,6 +1179,8 @@ Descripción de cada punto:
 
 ### Routers
 
+---
+
 Para modularizar el código, se generó dentro de *controllers* el archivo `notes.js`, que contiene una instancia de `Router` para poder definir los endpoints de notes.
 
 ```js
@@ -1134,9 +1212,13 @@ Por tanto, esta forma de definirlo permite hacer que cada módulo (archivo js) m
 
 ### Formas de Exportación / Importación de Módulos
 
+---
+
 Para exportar funcionalidades desde cada archivo, se debe tener en cuenta, la cantidad de elementos a exportar, ya que de eso depende la forma más optima de hacerlo.
 
 #### Exportación
+
+---
 
 En caso de que sean unas cuantas funciones, es posible utilizar un objeto JS para hacerlo. Por ej.:
 
@@ -1166,6 +1248,8 @@ module.exports = notesRouter
 ```
 
 #### Importación
+
+---
 
 Para importarlos, en el primer caso, se debe desestructurar el objeto...
 
@@ -1198,9 +1282,13 @@ app.use('/api/notes', notesRouter)
 
 ### Test unitario de aplicaciones en Node
 
+---
+
 Existe una librería interna de Node `node:test`, la cual puede configurarse para realizar __tests unitarios__. Viene integrada con Node por lo que no requiere instalaciones adicionales.
 
 #### Configuración
+
+---
 
 Modificar el script `test` en `package.json` a
 
@@ -1266,6 +1354,8 @@ Además, `describe` definida de la misma forma que `test`, permite realizar la a
 
 ##### Definición de ambientes distintos
 
+---
+
 Como parte de las definiciones necesarias para poder separar las condiciones que se requieren para pruebas se usa la variable de entorno `NODE_ENV`.
 
 Se le debe asignar el valor *development*, *test* o *production* para los ambientes de __desarrollo__, __pruebas__ o __producción__, respectivamente.
@@ -1314,6 +1404,8 @@ const MONGODB_URI = process.env.NODE_ENV === 'test'
 
 ### Test de integración de aplicaciones en Node: Uso de Supertest
 
+---
+
 Se instala como una dependencia de desarrollo:
 
 ```sh
@@ -1361,10 +1453,10 @@ test('notes are returned as json', async () => {
     // Espera un código de exito
     .expect(200)
     /*
-      * En este punto se espera recibir un texto que contenga un 'application/json'.
-      * Se valida con un regex, debido a que la response contendrá,
-      *  probablemente, otros caracteres extra.
-     */
+    En este punto se espera recibir un texto que contenga un 'application/json'.
+    Se valida con un regex, debido a que la response contendrá,
+     probablemente, otros caracteres extra.
+  */
     .expect('Content-Type', /application\/json/)
 })
 
@@ -1379,6 +1471,8 @@ La función `beforeEach` permite generar acciones para asegurar que la base de d
 La función `after` permite definir una acción que se realizará después de ejecutar los tests definidos. En este caso, cerrar la conexión con MongoDB.
 
 ### Elegir los tests a aplicar
+
+---
 
 Independientemente, del tipo de test a realizar es posible omitirlos del conjunto de pruebas, ya que al usar el comando `npm test` se ejecutan todos los archivos terminados en `.test.js`.
 
@@ -1437,9 +1531,13 @@ Independientemente, del tipo de test a realizar es posible omitirlos del conjunt
 
 #### Ejecución de varias suites de prueba evitando concurrencia
 
+---
+
 Si se decide definir pruebas en múltiples archivos, debe notarse que por defecto cada archivo de prueba se ejecuta en su propio proceso (ver Modelo de ejecución de pruebas en la [documentación](https://nodejs.org/api/test.html#test-runner-execution-model)). La consecuencia de esto es que diferentes archivos de prueba se ejecutan al mismo tiempo. Dado que las pruebas comparten la misma base de datos, la ejecución simultánea puede causar problemas, que pueden evitarse ejecutando las pruebas con la opción `--test-concurrency=1`, es decir, definiéndolas para que se ejecuten secuencialmente.
 
 ### async / await
+
+---
 
 Es la forma recomendada de tratar con promesas. En lugar de usar la función `then()` de forma encadenada, se agrega `await` antes de la llamada a alguna función que retornará una promesa.
 
@@ -1456,6 +1554,8 @@ const main = async () => {
 ```
 
 #### Manejo de errores con async/await
+
+---
 
 Para ello, simplemente se debe agregar secciones `try/catch` en los puntos del código en que pueden ocurrir errores. El middleware de manejo de errores, se llama desde el bloque `catch`
 
@@ -1480,6 +1580,8 @@ notesRouter.post('/', async (request, response, next) => {
 ```
 
 ##### Omisión de bloques `try/catch`
+
+---
 
 Considerando que la estructura seguida por los endpoints que usan funciones que requieren `try/catch`, se genera una cantidad de código repetido debido a la misma estructura generada:
 
@@ -1535,6 +1637,8 @@ notesRouter.delete('/:id', async (request, response) => {
 
 #### Uso de async / await para múltiples registros
 
+---
+
 Para iniciar el proceso de las pruebas, se requiere borrar y luego cargar una lista de valores, lo cual usando promesas puede llevar a resultados inesperados, ya que las asincronía de los procesos, podría llevar a que se inicien las pruebas sin cargar los valores antes.
 
 Por ello, se hace uso de `Promise.all()`, lo cual permite ejecutar un array de promesas de forma paralela. Así, se puede pasar de esto:
@@ -1581,6 +1685,8 @@ beforeEach(async () => {
 
 ### Gestión de usuarios
 
+---
+
 En Mongo, ya que es una BD no relacional, no existe un mecanismo definido para relacionar los usuarios con los elementos que creen en la aplicación. En caso del ejemplo de la app de Notas, lo que se implementa es registrar la relación en ambas entidades: el Schema de Notes, tiene el usuario que lo creó:
 
 ```js
@@ -1617,6 +1723,8 @@ const userSchema = new mongoose.Schema({
 Para el manejo de las passwords de forma segura, se debe guardar el hash de la misma. Para ello, se utiliza el paquete bcrypt (`npm i bcrypt`), el cual implementa el algoritmo [bcrypt](https://en.wikipedia.org/wiki/Bcrypt), que es considerado el estándar para esto.
 
 #### Uso de bcrypt
+
+---
 
 bcrypt se usa en el endpoint requerido para poder guardar los nuevos usuarios:
 
@@ -1656,6 +1764,8 @@ En la función `hash`, se indica el texto a encriptar y la cantidad de "iteracio
 
 ### Llenado de datos
 
+---
+
 Considerando la relación que tienen los dos schemas definidos, se deben generar operaciones similares en ambos controllers para poder reflejar los valores de uno en otro.
 
 Por tanto, se debe agregar la capacidad de que al llenar la nota se actualice el usuario con el ID obtenido:
@@ -1684,6 +1794,8 @@ notesRouter.post('/', async (request, response) => {
 ```
 
 ### Método `populate` de Mongoose para realizar uniones de colecciones
+
+---
 
 Como ambas colecciones tienen información la una de la otra, se debe usar el método `populate` para poder enlazar ambas.
 
@@ -1715,6 +1827,8 @@ La relación es posible de realizar por la definición de `type ObjectId` realiz
 ```
 
 ### Implementación de autenticación basada en tokens
+
+---
 
 Para ello se hace uso de la librería [`jsonwebtoken`](https://github.com/auth0/node-jsonwebtoken) (`npm install jsonwebtoken`)
 
@@ -1774,6 +1888,8 @@ app.use('/api/login', loginRouter)
 
 #### Uso de token para identificar usuarios e impedir la gestión, por si hay un token inválido
 
+---
+
 Se usa para ello el encabezado `Authorization` recibido en la request, con el tipo *Bearer*.
 
 La modificación a realizar se aplica para el endpoint `POST`:
@@ -1807,6 +1923,8 @@ notesRouter.post('/', async (request, response) => {
 > __NOTA__: Si la aplicación tiene múltiples interfaces que requieren identificación, la validación de JWT debe separarse en su propio middleware. También se podría utilizar alguna librería existente como [express-jwt](https://www.npmjs.com/package/express-jwt).
 
 #### Duración del token generado
+
+---
 
 Para poder hacer que el token sea seguro, se debe definir un tiempo de expiración del mismo, lo que hará que el usuario deba generar uno nuevo cuando este caduque. Para ello se debe agregar la opción `expiresIn` en la función `jwt.sign()`
 
@@ -1846,10 +1964,15 @@ next(error)
 ```
 
 > __IMPORTANTE__: Se debe tener en cuenta que la implementación de tokens debe ser realizada siempre usando un servidor con HTTPS, ya que el traspaso de información dentro del token, podría ser interceptado, a pesar de todas las medidas de encriptación tomadas dentro del servidor.
+---
 
 ## Part 5 - Probando aplicaciones React
 
+---
+
 ### Integrar login en React
+
+---
 
 Para ello, se debe considerar agregar las siguientes partes:
 
@@ -2017,6 +2140,8 @@ Para ello, se debe considerar agregar las siguientes partes:
 
 ### Renderizar de forma condicional (uso de operador &&)
 
+---
+
 Es común usar el operador `&&` en forma de "corto-circuito" para poder determinar si se renderiza un elemento:
 
 ```jsx
@@ -2052,6 +2177,8 @@ En cambio, si es verdadero (truthy), ejecutará la función y mostrará el formu
 
 ### Token de sesión persistente (uso de localStorage)
 
+---
+
 Una forma de hacerlo (que en general se puede usar pero puede tener problemas de seguridad ya que es potencialmente vulnerable a [ataques XSS](https://owasp.org/www-community/attacks/xss/)) es el uso de `local-storage`.
 
 local-storage es una BD de clave-valor, integrada en el navegador y que permite guardar información en forma de [DOMStrings](https://docs.w3cub.com/dom/domstring) los cuales se mantienen a pesar de realizar refrescos en la página. Son independientes por cada *origen* (suma de protocolo, dominio y puerto de una URL) usado.
@@ -2081,6 +2208,8 @@ Como se usa ese tipo de dato, se deben manipular como JSON, es decir, usar `JSON
 También es necesario saber que para existen los métodos `window.localStorage.setItem('clave')` y `window.localStorage.removeItem('clave')` para dar valor a la clave enviada y eliminar la clave enviada, respectivamente. Adicionalmente, existe `window.localStorage.clear()` que borra todas las claves.
 
 ### props.children
+
+---
 
 Son las propiedades que puede tener cualquier elemento definido como el padre de otro.
 
@@ -2142,6 +2271,8 @@ Estas propiedades `children` existen en todos los componentes definidos, sin emb
 ```
 
 ### Traspasar el manejo de las variables de estado a su componente
+
+---
 
 Para ello, simplemente se debe hacer que `useState()` sea determinado dentro del componente y ajustar de forma acorde la app. Esto puede ser realizado para variables que son solo afectadas directamente y depende solo del componente en que se renderizan.
 
@@ -2206,6 +2337,8 @@ En este caso, el componente recibe la función que permite generar el `submit` d
 
 ### Referencias a componentes (`ref` de React)
 
+---
+
 Esto hace uso del hook `useRef` de React, lo cual genera una `ref`. La ref generada constituye una variable que __no__ genera nuevos renderizados del componente al recibir cambios, y es seguido por React durante toda la vida del componente.
 
 ```jsx
@@ -2245,6 +2378,8 @@ const App = () => {
 Dentro del código, al llamar `useRef()`, se retorna una variable, que es un objeto plano JS, el cual contiene la propiedad `current`, cuyo valor sea el enviado en la llamada a `useRef()`.
 
 #### Uso de ref para poder acceder a variables internas de un componente
+
+---
 
 Si lo que se quiere lograr es manipular de forma dinámica el DOM de un página, la forma de realizar con React es usando una `ref`, a la cual se le asigne en el elemento a manipular.
 
@@ -2324,7 +2459,11 @@ Detalles de su uso se pueden encontrar [aquí](https://www.dhiwise.com/post/solu
 
 ### eslint en React
 
+---
+
 #### eslint versión 9.3 en adelante
+
+---
 
 Las aplicaciones creadas para React con Vite, ya vienen con eslint incorporado.
 
@@ -2443,6 +2582,8 @@ export default [
 
 #### Versiones anteriores de eslint
 
+---
+
 En caso de versiones anteriores, los `ignore` van en un archivo separado, llamado `.eslintignore`, en el que se ponen en cada línea los archivos y directorios a ignorar.
 
 En el caso del archivo con las `rules`, se denominará `.eslintrc.cjs` y tendrá el siguiente formato:
@@ -2501,9 +2642,13 @@ module.exports = {
 
 ### Prueba de aplicaciones React - Uso de Vitest y jsdom
 
+---
+
 > __IMPORTANTE__: La forma de definir la ubicación de las pruebas difiere algo en caso del Frontend. Es válido considerar que las pruebas se encuentren juntas con el componente que están probando, por lo que el archivo `test.js` que se genere quedará en el mismo directorio. Esto aplica para pruebas __unitarias__. Para pruebas de __integración__, ahí sí se vuelve a dejar todas las pruebas en un directorio `test`.
 
 #### Instalaciones necesarias
+
+---
 
 Se requiere instalar las siguientes librerías de base: `vitest` y `jsdom`
 
@@ -2546,6 +2691,8 @@ module.exports = {
 Con esas instalaciones realizadas, (documentación [aquí](https://testing-library.com/)) se puede proceder a realizar las configuraciones para poder realizar las pruebas.
 
 #### Configuración de las librerías de prueba
+
+---
 
 - Se debe agregar comando `vitest run`, bajo la denominación `test` en `package.json`
 
@@ -2590,6 +2737,8 @@ Con esas instalaciones realizadas, (documentación [aquí](https://testing-libra
   ```
 
 #### Implementación de las pruebas
+
+---
 
 Para implementar cualquier prueba se debe definir un archivo con el nombre del componente y la extensión `test.js`. Por ejemplo, el siguiente código prueba la renderización correcta del componente Note.
 
@@ -2644,11 +2793,15 @@ Luego, con el archivo definido, se puede ejecutar la prueba con el comando `npm 
 
 #### Cobertura de las pruebas (Coverage)
 
+---
+
 Para validar la cobertura que tienen las pruebas realizadas se debe usar el siguiente comando:
 
 `npm test -- --coverage`
 
 #### Elementos más importantes en la librería
+
+---
 
 - `render`: Permite mostrar el elemento dentro del navegador simulado.
 - `screen`: Permite el acceso a la ventana definida dentro del navegador simulado. Dentro de él existe un objeto `window`, idéntico al de un navegador real, en donde se puede hacer búsqueda de elementos a través del DOM de la página.
@@ -2657,6 +2810,8 @@ Para validar la cobertura que tienen las pruebas realizadas se debe usar el sigu
   - `getBy...()`, que permite buscar e identificar elementos dentro de la página creada para poder validarlos, similar a `querySelector()`. Se debe considerar que de las variedades a usar, hay que seleccionar el que sea más adecuado para la situación dependiendo de la definición del HTML que se busque. Más detalles [aquí](https://testing-library.com/docs/queries/about)
 
 ### Simulación de acciones del usuario con userEvent
+
+---
 
 La librería `user-event` tiene métodos con nombres similares (o idénticos) a los eventos de los elementos HTML, como click.
 
@@ -2697,13 +2852,19 @@ test('clicking the button calls event handler once', async () => {
 
 ### Pruebas de Extremo a Extremo (E2E) con Playwright
 
+---
+
 #### Instalación
+
+---
 
 Para poder usar [Playwright](https://playwright.dev/) se debe generar un proyecto node separado en el cual se definan las pruebas a realizar. Esto se logra usando el comando `npm init playwright@latest` dentro de un directorio nuevo separado del frontend y del backend.
 
 Esto implica que el proyecto de pruebas funciona independiente. Por tanto, se deben levantar los dos proyectos para poder aplicar las pruebas.
 
 #### Configuraciones del proyecto de pruebas
+
+---
 
 Con la implementación del comando `playwright`, se debe agregar las siguientes líneas al archivo `playwright.config.js`:
 
@@ -2746,6 +2907,8 @@ Además, como es un proyecto Node, se deben definir los comandos que permitirán
 
 #### Opciones adicionales para el comando `npm test`
 
+---
+
 Adicionalmente, existen flags que se pueden indicar para poder modificar el comportamiento obtenido al ejecutar las pruebas.
 
 - Si se quiere probar en un solo navegador, ya que, por defecto, Playwright prueba en 3 navegadores cada suite, se debe usar el flag `--project chromium`:
@@ -2772,9 +2935,13 @@ Por último, es posible [generar una nueva prueba](https://playwright.dev/docs/c
 
 #### Configuraciones para Frontend
 
+---
+
 En el Frontend, solo se debe levantar la aplicación en modo desarrollo, usando el comando `npm run dev`
 
 #### Configuraciones para Backend
+
+---
 
 Se debe configurar un nuevo modo de inicio del backend para uso en pruebas. Por tanto, se debe agregar un nuevo script en `package.json`. La idea es que la app funcione como en modo productivo, pero apuntando a modo test.
 
@@ -2835,6 +3002,8 @@ app.use(errorHandler)
 
 #### Implementación de pruebas
 
+---
+
 Las pruebas como tal, serán definidas dentro del directorio `tests` y tendrán extensión `spec.js`. Por ejemplo para probar el acceso a la aplicación Notes:
 
 ```js
@@ -2855,7 +3024,11 @@ describe('Note app', () => {
 
 Para más ejemplos de tests realizados, se puede revisar el proyecto [`blogs-frontend`](https://github.com/gus25888/blogs-frontend/tree/main) en el directorio [`blogs-tests`](https://github.com/gus25888/blogs-frontend/tree/main/blogs-tests).
 
+---
+
 ## Part 6 - Gestión avanzada del estado - Uso de Redux
+
+---
 
 Redux () es una librería que permite la gestión de estado de aplicaciones React de una forma más ordenada, basandose en los siguientes principios:
 
@@ -2986,6 +3159,8 @@ Para más detalle, ver la sección Redux Toolkit
 
 ### Librerías asociadas a pruebas de Redux
 
+---
+
 Como parte de pruebas que se deban realizar dentro de una aplicación que use Redux, se recomienda usar la librería `jest`:
 
 ```sh
@@ -3044,6 +3219,8 @@ Para detalles de las pruebas creadas se puede revisar el proyecto `reduxNotesApp
 
 ### Formularios NO controlados
 
+---
+
 Se refieren a formularios creados sin asociarlos al state de la aplicación de forma directa.
 
 Sus valores son enviados en conjunto con el submit del Form.
@@ -3092,6 +3269,8 @@ Tienen la ventaja de que permiten una implementación más "sencilla" que los co
 
 ### Compartir el "store" con los componentes de la aplicación (react-redux)
 
+---
+
 En Redux, el store, es un repositorio centralizado, por lo que es necesario darle acceso a todos los componentes que manejen algún valor de state para que pueden actualizarlo como estimen conveniente. Para ello existe la librería *react-redux* (`npm install react-redux`) que tiene varios *hooks* disponibles para hacer esta asociación.
 
 Para poder usar los *hooks* se define que el `main.jsx` consistirá de un `Provider` el cual es el contenedor principal de la aplicación y que tiene en sus props el `store`, definido en el mismo módulo:
@@ -3114,6 +3293,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 #### Hooks de react-redux: `useSelector`, `useDispatch`
+
+---
 
 `useDispatch()` o funciones dispatch: Proporciona acceso a cualquier componente de React a la función `dispatch` de redux-store definida en `main.jsx`. Esto permite que todos los componentes realicen cambios en el estado de Redux store.
 
@@ -3152,6 +3333,8 @@ En este ejemplo, se está la función enviada retorna el state completo. Sin emb
 Con estos dos hooks, es posible realizar la modularización de la aplicación, dejando que cada componente maneje los datos del store que requiera y luego en el componente "App" solo se importan y utilizan.
 
 ### Manejo de estados complejos: uso de `combineReducers`
+
+---
 
 Dentro de una aplicación, es común tener que manejar varios valores de estado que se relacionan, de forma simúltanea, lo que involucra el uso de varios Reducers.
 
@@ -3220,9 +3403,13 @@ const Notes = () => {
 
 ### Redux Toolkit (RTK)
 
+---
+
 Es una librería que fue desarrollada por los mismos creadores de Redux, con el objetivo de simplificar el proceso de levantar el estado de la aplicación, que implica generar código repetitivo que sigue ciertos patrones para poder implementar las actions, reducers y la interacción con el state. Se instala con `npm install @reduxjs/toolkit`
 
 #### configureStore
+
+---
 
 Permite crear el Store que contendrá el state de la aplicación y realiza la combinación de los Reducers de forma automática.
 Esto se crea en un archivo independiente en `src/store.js`, importando los reducers a utilizar.
@@ -3261,6 +3448,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 #### createSlice
+
+---
 
 Permite la creación de los Action Creators y los Reducers de una sola vez
 
@@ -3325,6 +3514,8 @@ Se le envía un objeto en que se indica:
 
 ##### Consideraciones con console.log con RTK
 
+---
+
 Considerando el uso de Immer, es necesario hacer una adecuación del state si es necesario mostrarlo por consola. Para ello, se debe usar la función `current` de RTK para poder obtener el estado actual del state.
 
 ```js
@@ -3335,7 +3526,11 @@ console.log(current(state))
 
 #### Manejo de datos externos usando RTK
 
+---
+
 ##### Obtención de datos
+
+---
 
 Para ello, se debe considerar la creación de un `service` que maneje las métodos HTTP que se implementen, usando los métodos ya vistos para ello usando la librería `axios`.
 
@@ -3392,6 +3587,8 @@ Se debe considerar que con este método soporta solo funciones síncronas, (no f
 
 ##### Creación de datos
 
+---
+
 Para la creación de datos, se debe realizar el llamado a la función de creación definida dentro del módulo que usa axios, dentro del componente que realizará la creación del registro, que normalmente será un Form.
 
 ```jsx
@@ -3429,9 +3626,13 @@ export default NewNote
 
 ##### Actualización y borrado de datos
 
+---
+
 Una lógica similar se debe implementar para la actualización o el borrado de datos, es decir, generar una función dentro del componente que realizará la acción correspondiente y generar una función que haga uso de la funcionalidad generada para la comunicación con el backend. Luego, el resultado de la llamada al backend, se envía al Creador de Acción correspondiente.
 
 #### Redux Thunk, para uso de funciones asíncronas con RTK
+
+---
 
 El enfoque anterior no es el adecuado ya que requiere que las funciones estén embebidas en los componentes, lo cual no es una buena práctica. Por ello, y además, por el impedimento del uso de funciones asíncronas, se usa Redux Thunk.
 
@@ -3517,6 +3718,8 @@ const App = () => {
 
 ### React Query (o llamada actualmente TanStack Query)
 
+---
+
 Se instala con el comando `npm install @tanstack/react-query`
 
 Es una [librería](https://tanstack.com/query/latest) enfocada en gestionar el *estado del servidor*, a través de una implementación simple de operaciones asícronas. Se puede pensar que permite generar un caché de los datos del servidor en el frontend.
@@ -3528,6 +3731,8 @@ A pesar de que Redux, se puede usar para gestiones de datos asíncronos, es más
 Para más detalles, se puede ver [este link](https://tanstack.com/query/latest/docs/framework/react/guides/does-this-replace-client-state)
 
 #### Implementación de React Query
+
+---
 
 Luego, de su instalación y teniendo un módulo que pueda manejar en sendas funciones los diferentes métodos HTTP (GET, POST, etc.), se debe proceder primero disponer de dos funciones necesarias en `main.jsx`: `QueryClient` y `QueryClientProvider`.
 
@@ -3597,6 +3802,8 @@ Para más detalles revisar el archivo `App.jsx` dentro del directorio `query-not
 
 ### `useReducer`, para el manejo de estados internos con React Query
 
+---
+
 `useReducer()` es una de las utilidades de React base, que permite implementar reducers para el manejo de estado. Se recomienda que sean usados cuando alguna variable de estado, es modificada de varias formas distintas (3 o más) y funciona de forma muy similar a los implementados con Redux: se genera una función que recibe state y action, en donde el primero contiene los valores del estado y el segundo indica el tipo de modificación y valores a aplicar a la misma.
 
 ```jsx
@@ -3640,6 +3847,8 @@ Para poder integrar el reducer creado, se usa `useReducer()`, enviando el Reduce
 Al igual que los reducers ya vistos, al usar el `dispatch`, se requiere que se envien dos variables: el `state` actual y la `action` a aplicar. Esta ultima contendrá el valor a aplicar (`payload`) y el tipo de modificación a aplicar (`type`).
 
 #### Usando `context` para evitar el "prop drilling"
+
+---
 
 La idea de usar Reducers es poder modularizar la aplicación, dejando en archivos separados el reducer de los componentes que lo utilicen. En caso de que se requiera que el state sea usado por un componente, debe venir como parte de sus props. Esto implica que todos los componentes que lo contengan, tendrían potencial acceso a la variable del state, la cual no tienen necesidad de acceder. Esta situación se conoce como *prop drilling*.
 
@@ -3697,11 +3906,17 @@ Idealmente, el módulo en que se defina el context debería tener la definición
 
 Con ello, es posible realizar las integración del context desde el main.jsx
 
-Para más detalles ver el directorio hook-counter.
+Para más detalles ver el directorio `hook-counter`
+
+---
 
 ## Part 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
 
+---
+
 ### React Router
+
+---
 
 Librería que permite la administración de la navegación en una aplicación React.
 
@@ -3760,6 +3975,8 @@ El elemento `Link` permite definir los path que tendrá la aplicación y a los c
 
 #### Funciones relevantes dentro de React Router
 
+---
+
 Todas estas funciones se importan desde `react-router-dom`, al igual que en el ejemplo mostrado.
 
 - `useParams`: Hook personalizado que permite tener acceso a todos los params recibidos desde una URL en un formato clave-valor.
@@ -3793,7 +4010,7 @@ const Login = (props) => {
     /*
       En este punto, al recibir las credenciales del usuario mluukkai,
       se ingresa al home de la aplicación.
-    */
+*/
     navigate('/')
   }
 
@@ -3848,7 +4065,7 @@ const App = () => {
     En este ejemplo, se obtendrán datos de la URL específica
     que obtiene una sola nota. Se usa el id obtenido desde ahí
     para poder buscar y obtener esa única nota buscada.
-  */
+*/
   const match = useMatch('/notes/:id')
   const note = match
     ? notes.find(note => note.id === Number(match.params.id))
@@ -3869,6 +4086,8 @@ const App = () => {
 Para más detalles revisar el directorio notesAppRouter.
 
 ### Hooks Personalizados
+
+---
 
 Una de las grandes ventajas de la especificación de Hooks es la capacidad de poder crear los propios, permitiendo definir "comportamientos" dentro del código, "ocultando" los detalles de cómo se hacen las modificaciones de los datos para visibilizar mejor qué es lo que hacen esos comportamientos.
 
@@ -3924,11 +4143,15 @@ En este caso, por ej. se muestra que el Hook puede ser utilizado más de una vez
 
 Para más detalles revisar el directorio custom-hooks-counter.
 
-### Librerías para la integración de estilos en React
+### Librerías para la integración de estilos CSS en React
+
+---
 
 Existen muchas librerías que permiten realizar estas tareas, por lo que se ha enfocado en las dos más populares, *Bootstrap* y *Material UI*. También se menciona una adicional llamada *styled-components* que tiene un enfoque distinto, al basarse en las [plantillas literales etiquetadas](https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Template_literals#plantillas_etiquetadas) para agregar CSS a la aplicación.
 
 #### React Bootstrap
+
+---
 
 Se instala con el comando `npm install react-bootstrap`.
 
@@ -4017,6 +4240,8 @@ Para más detalles, se encuentra la [documentación](https://react-bootstrap.git
 
 #### Material UI
 
+---
+
 Se instala con el comando `npm install @mui/material @emotion/react @emotion/styled`.
 
 Para usarlo, se debe modificar el div contenedor de `App.jsx` al componente `Container`:
@@ -4072,6 +4297,8 @@ Para más ejemplos, se pueden revisar los componentes creados en `notesAppRouter
 Para más detalles, se encuentra la [documentación](https://mui.com/material-ui/getting-started/) de la librería, la cual contiene el detalle de los componentes que existen y como se usan.
 
 #### Styled-Components
+
+---
 
 Se instala con el comando `npm install styled-components`.
 
@@ -4167,3 +4394,124 @@ const Menu = ({ user }) => {
 
 export default Menu
 ```
+
+Cosas a notar:
+
+- A diferencia de Bootstrap, no es necesario importar el archivo CSS en `index.html`
+- Cada componente se genera basado en etiquetas HTML directas.
+
+Para más ejemplos, se pueden revisar los componentes creados en `notesAppRouter\src\styled_components-components`.
+
+Para más detalles, se encuentra la [documentación](https://styled-components.com/docs/basics#getting-started) de la librería, la cual contiene el detalle de los componentes que existen y como se usan.
+
+### Webpack
+
+---
+
+Se debe instalar con el comando `npm install --save-dev webpack webpack-cli`.
+
+Para más detalles, se puede revisar su [documentación](https://webpack.js.org/api/)
+
+Para ejemplo, se puede revisar el directorio `bundle-example`.
+
+Especificamente, se debe revisar los archivos `webpack.config.js`, que contiene detalles de la config. necesaria para poder hacer el bundle de la aplicación.
+
+También es importante considerar que se debe generar un script en `package.json`, llamado `build` que aplique el comando `webpack --mode=production` para poder aplicar lo definido en el config.
+
+Otro script a generar es `start` con el comando `webpack serve --mode=development`, lo que permite generar builds de forma automática en memoria para poder recargar la aplicación mientras se encuentran realizando modificaciones a la misma durante el desarrollo. Estas builds no quedan registradas en el directorio registrado de salida de la build.
+
+#### Descripción de configuración de webpack
+
+---
+
+La configuración se define en el archivo `webpack.config.js` en la raíz del proyecto. Dentro es posible definirla como un objeto, que es lo que se hace normalmente para una nueva aplicación.
+
+Sin embargo, al usar una función es posible utilizar ciertas características específicas en la configuración de webpack, como por ejemplo, diferenciar entre ambientes de desarrollo y productivos.
+
+##### Parámetros de entrada de función config (webpack)
+
+---
+
+Esta función denominada `config` puede recibir dos parámetros:
+
+- __env__: Objeto que contiene las variables de entorno de webpack, los cuales son enviados en conjunto con el comando que invoca a webpack, asociado al flag `--env`. Por ejemplo, el siguiente código asigna el NODE_ENV, al invocar a webpack.
+
+```sh
+npx webpack --config-node-env production   # process.env.NODE_ENV = 'production'
+```
+
+- __argv__: Objeto que contiene argumentos (flags) que tiene definido webpack. Especificamente, la propiedad `mode`, permite indicar el tipo de ambiente en que se generará el build de la aplicación.
+
+##### Salida de función config (webpack)
+
+---
+Esta función debe retornar un objeto con los parámetros necesarios para poder realizar la build. Se describen cada una de las propiedades del objeto obtenido desde la función:
+
+- __entry__: Define el "punto de entrada" de la aplicación. Desde aquí, webpack genera un árbol de dependencias de todos los módulos involucrados en el funcionamiento del código de la aplicación y que serán agrupados en el archivo resultado del proceso de Bundle.
+
+- __output__: Define la ubicación del código resultante del proceso de Bundle. Debe ser definido como una ruta ABSOLUTA, por lo que se usar path.resolve de Node para generarlo desde una ubicación relativa. `__dirname` corresponde al directorio en que se ubica este archivo.
+
+- __module__: Define los "loaders" que se utilizarán en el proceso de Bundle. Esto permite indicar a webpack qué archivos necesitan ser preprocesados y cómo deben serlo, antes de poder incluirlos en el archivo final.
+  Cada loader está definido en el array de "rules". Se compone de las propiedades:
+  - __test__: indica a qué tipo de archivos se aplica.
+  - __loader__: indica qué librería hará el procesamiento de esos archivos. Deben incluirse en el proyecto, según corresponda.
+  - __option__: indica qué parámetros se usarán en el "loader".
+    - *presets*: corresponde a los plugins usados como parte del loader. En este caso, son los necesarios para poder transpilar jsx a js versión ES5, que es la versión base soportada por todos los navegadores modernos.
+  - __use__: indica qué otros loaders se usarán para generar archivos válidos para el bundle final. Estos archivos serán incluidos en conjunto con main.js que se generará por el bundle.
+
+- __devServer__: Contiene el objeto que permite definir los parámetros para el proceso de generación del bundle mientras se encuentra en desarrollo. Esto generará un bundle dinámico, similar al `npm run dev` de una aplicación hecha con vite.
+
+- __devtool__: Contiene el valor (`'source-map'`) que permite indicar si se generará una asociación entre el bundle y el archivo original del código fuente, en caso de necesitar revisar la línea específica de código en que ocurre un error. Esto se conoce como *Source Maps*. En caso de tener levantada la aplicación con el script `start`, es necesario realizar un reinicio de webpack para que tome efecto esta propiedad.
+
+- __plugins__: Contiene la definición de un array que contendrá el listado de las configuraciones de plugins necesarios para implementar comportamientos personalizados en la configuración de Webpack.
+
+#### Minificación del código
+
+---
+
+Considerando que el proceso de bundle toma todas las dependencias de la aplicación, incluyendo lo que viene en node_modules, ocurrirá que el archivo js resultante, se vuelva muy pesado, lo cual puede no es conveniente para la aplicación funcionando de forma productiva.
+
+Es por ello que webpack implementa un minificador para poder quitar todos los comentarios del código, y cambiar los nombres de las variables a una sola letra, con el objetivo de hacer lo más pequeño posible el archivo resultante.
+
+Para lograrlo, se debe modificar la opción usada en el comando `webpack serve --mode=development` para que sea `production` en lugar de `development`.
+
+#### Configuración para variables de entorno de distintos ambientes
+
+---
+
+Para poder definir variables de entorno que tengan en cuenta uso de valores distintos entre `development` y `production`, se debe usar dentro de la configuración de webpack un plugin definido dentro del mismo webpack, llamado `webpack.DefinePlugin`. Dentro se configuran los nombres de las variables que tendrán valores distintos dependiendo del ambiente.
+
+> IMPORTANTE: Se debe considerar que los valores a usar en cada variable, son determinados durante la compilación y son interpretados de forma literal. Esto implica que si se requiere, por ej. que el valor sea un string, se debe indicar los caracteres de comillas para que sean agregados. Otra forma es usar la función `JSON.stringify()` para asegurar que la variable tenga el valor formateado correctamente.
+
+#### Instalaciones necesarias para generar una aplicación React desde cero, y poder generar el bundle con Webpack
+
+---
+
+```sh
+# Librería React
+npm install react react-dom
+#Para poder hacer uso de funciones async
+npm install core-js regenerator-runtime
+# Para poder hacer el bundle de la aplicación
+npm install --save-dev webpack webpack-cli
+#Para poder hacer bundle de archivos jsx. Además, poder transpilarlo a ES5.
+npm install --save-dev @babel/core babel-loader @babel/preset-react @babel/preset-env
+#Para poder generar el css de la aplicación y poder incluirlo en el archivo main.js.
+npm install --save-dev style-loader css-loader
+#Para poder generar builds de la aplicación de forma automática cuando estamos en modo desarrollo.
+npm install --save-dev webpack-dev-server
+```
+
+### Polyfills
+
+Son funcionalidades (librerías normalmente) que permiten "parchar" comportamientos no disponibles en navegadores antiguos para poder utilizar código más reciente en ellos.
+
+Como la definición es muy amplia, dependerá mucho de la funcionalidad que se quiera suplir el Polyfill que se requerirá.
+
+Uno de los más completos es el de Babel, llamado [Babel/Polyfill](https://babeljs.io/docs/babel-polyfill/)
+
+También está el que permite usar Promesas en Internet Explorer, llamado [Promise-Polyfill](https://www.npmjs.com/package/promise-polyfill)
+
+En caso de necesitar consultar por Polyfills existentes, se puede consultar [aqui](https://github.com/Modernizr/Modernizr/wiki/HTML5-Cross-browser-Polyfills)
+
+Para poder validar si alguna caracteristica de JS es soportada por el navegador, se puede consultar [caniuse.com](https://caniuse.com/)
