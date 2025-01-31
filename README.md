@@ -1,8 +1,6 @@
 # Notas de Curso FullStack
 
----
-
-## Part 1 - *Introducción* a React
+## Parte 1 - Introducción a React
 
 ---
 
@@ -304,7 +302,7 @@ const App = () => {
 
 ---
 
-## Part 2 - *Comunicandose* con el servidor
+## Parte 2 - Comunicandose con el servidor
 
 ---
 
@@ -546,7 +544,7 @@ Con ello, al usar el comando `npm run server`, se podrá tener una instancia bac
 
 ---
 
-## Part 3 - *Programando* un servidor con NodeJS y Express
+## Parte 3 - Programando un servidor con NodeJS y Express
 
 ---
 
@@ -1133,7 +1131,7 @@ Las reglas a usar en el archivo obtenido se pueden obtener desde [aqui](<https:/
 
 ---
 
-## Part 4 - *Probando* servidores Express, administración de usuarios
+## Parte 4 - Probando servidores Express, administración de usuarios
 
 ---
 
@@ -1966,7 +1964,7 @@ next(error)
 > __IMPORTANTE__: Se debe tener en cuenta que la implementación de tokens debe ser realizada siempre usando un servidor con HTTPS, ya que el traspaso de información dentro del token, podría ser interceptado, a pesar de todas las medidas de encriptación tomadas dentro del servidor.
 ---
 
-## Part 5 - Probando aplicaciones React
+## Parte 5 - Probando aplicaciones React
 
 ---
 
@@ -3026,7 +3024,7 @@ Para más ejemplos de tests realizados, se puede revisar el proyecto [`blogs-fro
 
 ---
 
-## Part 6 - Gestión avanzada del estado - Uso de Redux
+## Parte 6 - Gestión avanzada del estado - Uso de Redux
 
 ---
 
@@ -3910,7 +3908,7 @@ Para más detalles ver el directorio `hook-counter`
 
 ---
 
-## Part 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
+## Parte 7 - React router, custom hooks, estilando la aplicación con CSS y webpack
 
 ---
 
@@ -4504,6 +4502,8 @@ npm install --save-dev webpack-dev-server
 
 ### Polyfills
 
+---
+
 Son funcionalidades (librerías normalmente) que permiten "parchar" comportamientos no disponibles en navegadores antiguos para poder utilizar código más reciente en ellos.
 
 Como la definición es muy amplia, dependerá mucho de la funcionalidad que se quiera suplir el Polyfill que se requerirá.
@@ -4515,3 +4515,26 @@ También está el que permite usar Promesas en Internet Explorer, llamado [Promi
 En caso de necesitar consultar por Polyfills existentes, se puede consultar [aqui](https://github.com/Modernizr/Modernizr/wiki/HTML5-Cross-browser-Polyfills)
 
 Para poder validar si alguna caracteristica de JS es soportada por el navegador, se puede consultar [caniuse.com](https://caniuse.com/)
+
+### Uso de clases en React
+
+---
+
+Esta es la forma en que se desarrollaba con React para las versiones anteriores a 16.8, __NO ES RECOMENDADO GENERAR NUEVOS APLICACIONES EN REACT USANDO ESTA FORMA__, a pesar de que es soportado en versiones modernas y NO se tiene planes de dejarlo obsoleto.
+
+Consiste en la definición de componentes basado en la herencia desde `React.Component`.
+
+Se define una nueva clase en que se define un constructor sencillo, que llama a `super(props)` para poder enviar las props y se define un `state` que es un estado único para el componente. El state es un objeto JS cuyas propiedades corresponderán a los distintos estados definidos con `useState()` usando la forma moderna.
+
+Para poder manejar las interacciones con los estados, existen las siguientes funciones, que deben definirse como métodos de la clase. Son denominadas __métodos de ciclo de vida del componente__.
+
+- `render()`: Es el único método requerido en una clase Componente de React. Cuando se invoca, debería examinar los valores de `this.props` y `this.state` y debería retornar un Componente React; múltiples Componentes o Fragmentos en un Array; Números o Strings, que se renderizan como nodos de textos en el DOM; o Booleanos, *null* o *undefined*, que permiten omitir el renderizado del componente. `render()` debe ser una función pura, es decir, NO modifica el state y retorna lo mismo con cada invocación.
+
+- `constructor()`: Este método es llamado antes de que se agregue el componente al DOM de la página. Se utiliza para permitir inicializar el state del componente con el objeto que contendrá cada variable del mismo. Solo aquí se puede usar `this.state` directamente, en los otros métodos debe usarse `this.setState()`. Además, se usa para poder asociar los "manejadores de eventos" a la instancia del componente. Dentro se debe invocar a `super(props)` en la primera línea.
+
+- `componentDidMount()`: Método invocado cuando se agrega el componente al DOM de la página, es decir, en el primer render del componente. En este punto se deberían definir las inicializaciones necesarias de datos o de conexiones a BD.
+- `componentDidUpdate()`: Método invocado cuando se realiza una modificación en el componente. Es aquí donde se debe realizar la obtención de datos y las actualizaciones del state. Es en este punto que se deben realizar comparaciones de las props existentes con las anteriores, para validar si es necesario la obtención de datos externos. Para manipular el state, se debe usar `this.setState()`.
+
+- `componentWillUnmount()`: Método invocado cuando se elimina el componente del DOM de la página. Este método se usa para limpiar los cambios realizar como parte del método `componentDidMount` como por ejemplo, realizar la desconexión de la BD. Si este método se invoca significa que el componente no se renderizará más, por lo que cualquier llamado a `setState()` podría no tener los resultados esperados.
+
+Para un ejemplo, se puede revisar el componente `App` dentro del directorio anecdotes-react-classes
