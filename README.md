@@ -4,7 +4,7 @@
 
 ---
 
-### Creacion de app
+### Creación de app
 
 ---
 
@@ -1130,6 +1130,67 @@ Este ultimo comando (`npx eslint --init`) genera un archivo `eslint.config.js`, 
 Las reglas a usar en el archivo obtenido se pueden obtener desde [aqui](<https://eslint.org/docs/latest/rules/>) en el caso de las *normales* y para las *stylistics* [aquí](<https://eslint.style/packages/js>)
 
 ---
+
+#### Configuración de Prettier
+
+[Prettier](https://prettier.io/docs/) es un formateador de código opinado, es decir, que tiene definido especificamente la forma en que se debe formatear los archivos, dejando muy poco margen a la personalización.
+
+Se instala y configura con los siguientes comandos:
+
+```sh
+# Instalación
+npm install --save-dev --save-exact prettier
+# Crear el archivo de configuración
+node --eval "fs.writeFileSync('.prettierrc','{}\n')"
+# Crear el archivo para definir los archivos ignorados por Prettier.
+node --eval "fs.writeFileSync('.prettierignore','# Ignore artifacts:\nbuild\ncoverage\n')"
+```
+
+Luego, para poder mantener el mismo formato que ESLint, se debe agregar las siguientes lineas a `.prettierrc`:
+
+```js
+{
+  "trailingComma": "es5",
+  "tabWidth": 2,
+  "semi": false,
+  "singleQuote": true
+}
+```
+
+##### Integración de Prettier con ESLint
+
+Es posible configurarlo para que funcione junto con ESlint, con el objetivo de eliminar completamente la necesidad de definir el formato del código a usar, manteniendo orden y consistencia en los archivos.
+
+Se debe instalar el plugin `eslint-config-prettier` (`npm install --save-dev eslint-config-prettier`), y luego se debe modificar el archivo `.eslintrc.cjs` (o `eslint.config.js`, en caso de usar esa forma), agregando `prettier` como una nueva configuración dentro de la sección `extends`:
+
+```js
+{
+  "extends": [
+    // ...
+    "plugin:prettier/recommended" //Agregar esto...
+  ]
+}
+```
+
+##### Uso de Prettier
+
+Con las configuraciones aplicadas, para poder aplicar prettier se debe usar el comando `npx prettier . --write`.
+
+Para su uso de forma más cómoda, se puede configurar como un nuevo script en `package.json`:
+
+```json
+{
+  // ...
+  "scripts": {
+    // ...
+    "prettier": "prettier . --write",
+    "prettier-check": "prettier . --check",
+  }
+  //...
+}
+```
+
+También se agregó un script con la opción `check` para permitir validar la aplicación de los formatos.
 
 ## Parte 4 - Probando servidores Express, administración de usuarios
 
@@ -3028,13 +3089,13 @@ Para más ejemplos de tests realizados, se puede revisar el proyecto [`blogs-fro
 
 ---
 
-Redux () es una librería que permite la gestión de estado de aplicaciones React de una forma más ordenada, basandose en los siguientes principios:
+[Redux](https://redux.js.org/introduction/getting-started) es una librería que permite la gestión de estado de aplicaciones React de una forma más ordenada, basandose en los siguientes principios:
 
 - __Estado Centralizado__: Se busca centralizar todos las variables de estado de una aplicación en repositorio único de una forma que sea predecible haciendo que sea sencillo seguir y depurar dónde y cuándo se realizó el cambio.
 
 - __Inmutabilidad__: Para lograr que la aplicación sea predecible, se basa en el uso de variables inmutables para gestionar los estados. Esto se aplica haciendo que cada cambio a un objeto o a un array involucre copiar el mismo y luego asignarlo a la variable de estado correspondiente.
 
-Se instala con el comando
+Se instala con el comando `npm install redux`
 
 Para lograr que estos principios se cumplan se debe seguir unas reglas específicas y generar una forma consistente de definir cada variable de estado y su forma de ser actualizada, y además, hacer que esa actualización afecte a los componentes de la aplicación que corresponda. Esto se logra usando lo siguiente:
 
@@ -3265,11 +3326,11 @@ const App = () => {
 
 Tienen la ventaja de que permiten una implementación más "sencilla" que los controlados ( que son los que están asociados a React por `useState()`), pero con ellos no es posible generar validaciones inmediatas en cada input o impedir que se active el botón de envío si no están los datos necesarios especificados.
 
-### Compartir el "store" con los componentes de la aplicación (react-redux)
+### Compartir el "store" con los componentes de la aplicación (`React-redux`)
 
 ---
 
-En Redux, el store, es un repositorio centralizado, por lo que es necesario darle acceso a todos los componentes que manejen algún valor de state para que pueden actualizarlo como estimen conveniente. Para ello existe la librería *react-redux* (`npm install react-redux`) que tiene varios *hooks* disponibles para hacer esta asociación.
+En Redux, el store, es un repositorio centralizado, por lo que es necesario darle acceso a todos los componentes que manejen algún valor de state para que pueden actualizarlo como estimen conveniente. Para ello existe la librería [*react-redux*](https://react-redux.js.org/introduction/getting-started) (`npm install react-redux`) que tiene varios *hooks* disponibles para hacer esta asociación.
 
 Para poder usar los *hooks* se define que el `main.jsx` consistirá de un `Provider` el cual es el contenedor principal de la aplicación y que tiene en sus props el `store`, definido en el mismo módulo:
 
@@ -3760,7 +3821,7 @@ Luego, en `app.jsx` se debe utilizar dos funciones principales:
 
   Con ello, se pueden generar condiciones para impedir que la aplicación se renderice con los datos, y hacer que muestre información distinta acorde a la situación: Mostrar un mensaje de error si no se encontraron datos, por ejemplo.
 
-- `useMutation()`: Permite definir una función para poder realizar las gestiones del "origen de datos" creado con `useQuery.()`. Se le debe enviar la función que realiza la modificación de los datos (creación, borrado o actualización) en la propiedad `mutationFn` y además, generar una función para el parámetro `onSuccess` que permita definir qué se hará después de realizada la acción definida en mutationFn.
+- `useMutation()`: Permite definir una función para poder realizar las gestiones del "origen de datos" creado con `useQuery()`. Se le debe enviar la función que realiza la modificación de los datos (creación, borrado o actualización) en la propiedad `mutationFn` y además, generar una función para el parámetro `onSuccess` que permita definir qué se hará después de realizada la acción definida en mutationFn.
 
 - `useQueryClient()`: Permite gestionar los datos ya obtenidos con `useQuery()` y que se encuentran en el frontend.
 
@@ -3842,15 +3903,15 @@ export default App
 
 Para poder integrar el reducer creado, se usa `useReducer()`, enviando el Reducer y el valor inicial de la variable asociada al state creado. Retorna dos cosas: la variable asociada al `state` y el `dispatch`, que es la función que permite enviar los cambios a realizar a la variable en cuestión.
 
-Al igual que los reducers ya vistos, al usar el `dispatch`, se requiere que se envien dos variables: el `state` actual y la `action` a aplicar. Esta ultima contendrá el valor a aplicar (`payload`) y el tipo de modificación a aplicar (`type`).
+Al igual que los reducers ya vistos, al usar el `dispatch`, se requiere que se envien dos variables: el `state` actual y la `action` a aplicar. Esta última contendrá el valor a aplicar (`payload`) y el tipo de modificación a aplicar (`type`).
 
 #### Usando `context` para evitar el "prop drilling"
 
 ---
 
-La idea de usar Reducers es poder modularizar la aplicación, dejando en archivos separados el reducer de los componentes que lo utilicen. En caso de que se requiera que el state sea usado por un componente, debe venir como parte de sus props. Esto implica que todos los componentes que lo contengan, tendrían potencial acceso a la variable del state, la cual no tienen necesidad de acceder. Esta situación se conoce como *prop drilling*.
+La idea de usar Reducers es poder modularizar la aplicación, dejando en archivos separados el reducer de los componentes que lo utilicen. En caso de que se requiera que el state sea usado por un componente, debe venir como parte de sus props. Esto implica que todos los componentes que lo contengan, tendrían potencial acceso a la variable del state, lo cual no es deseable ya que no tienen la necesidad de ello. Esta situación se conoce como *prop drilling*.
 
-Para evitarlo en React, existen los contexts, que corresponden a un tipo de estado global de la aplicación, al que cualquier componente hijo puede tener acceso al definir un state en su padre común sin importar qué tan larga sea la cadena de "herencia".
+Para evitarlo en React, existen los `contexts`, que corresponden a un tipo de estado global de la aplicación, al que cualquier componente hijo puede tener acceso al definir un state en su padre común sin importar qué tan larga sea la cadena de "herencia".
 
 ```jsx
 import { createContext } from 'react'
@@ -3902,7 +3963,7 @@ export const Button = ({ type, label }) => {
 
 Idealmente, el módulo en que se defina el context debería tener la definición de los estados también. Esto con el objetivo de centralizar las definiciones de estado en donde se van a disponibilizar.
 
-Con ello, es posible realizar las integración del context desde el main.jsx
+Con ello, es posible realizar las integración del context desde el `main.jsx`.
 
 Para más detalles ver el directorio `hook-counter`
 
