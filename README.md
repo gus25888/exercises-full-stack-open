@@ -963,28 +963,28 @@ app.post('/api/notes', (request, response, next) => {
 
 ```js
 app.put('/api/notes/:id', (request, response, next) => {
-    const body = request.body;
+  const body = request.body;
 
-    /*
-  Se genera un objeto plano con el nuevo contenido de la nota.
-  NO SE USA una nueva instancia de Note para esto.
-  Requiere:
-    id Documento,
-    nuevos valores a modificar
-    opciones:
-        new: true,           indica que el resultado de la operacion retornará la nota actualizada.
-        runValidators: true, indica que se utilizará las validaciones definidas en el Schema
-        context: 'query',    permite indicar que el contexto de la validacion afecta solo a esta operación.
+  /*
+    Se genera un objeto plano con el nuevo contenido de la nota.
+    NO SE USA una nueva instancia de Note para esto.
+    Requiere:
+      id Documento,
+      nuevos valores a modificar
+      opciones:
+          new: true,           indica que el resultado de la operacion retornará la nota actualizada.
+          runValidators: true, indica que se utilizará las validaciones definidas en el Schema
+          context: 'query',    permite indicar que el contexto de la validacion afecta solo a esta operación.
+  */
+  const note = {
+      content: body.content,
+      important: body.important
+  }
 
-    const note = {
-        content: body.content,
-        important: body.important
-    }
-
-    Note
-        .findByIdAndUpdate(request.params.id, note, { new: true, runValidators: true, context: 'query' })
-        .then(updatedNote => { response.json(updatedNote) })
-        .catch(error => next(error))
+  Note
+      .findByIdAndUpdate(request.params.id, note, { new: true, runValidators: true, context: 'query' })
+      .then(updatedNote => { response.json(updatedNote) })
+      .catch(error => next(error))
 })
 
 
@@ -4096,7 +4096,7 @@ const Login = (props) => {
 /*
   En este caso la Route /users está definida condicionalmente:
   Si se intenta acceder sin sesión (definida por la variable user)
-  se redigirá a la Route de login.
+  se redirigirá a la Route de login.
 */
   <Routes>
     <Route path="/notes/:id" element={<Note note={note} />} />
@@ -4599,3 +4599,657 @@ Para poder manejar las interacciones con los estados, existen las siguientes fun
 - `componentWillUnmount()`: Método invocado cuando se elimina el componente del DOM de la página. Este método se usa para limpiar los cambios realizar como parte del método `componentDidMount` como por ejemplo, realizar la desconexión de la BD. Si este método se invoca significa que el componente no se renderizará más, por lo que cualquier llamado a `setState()` podría no tener los resultados esperados.
 
 Para un ejemplo, se puede revisar el componente `App` dentro del directorio anecdotes-react-classes
+
+## Parte 8 - GraphQL
+
+GraphQL consiste en una forma distinta de obtener información desde un backend. A diferencia de REST, lo que se indica en una petición GraphQL es los datos que se requieren obtener basado en la definición de Esquema y Consultas definida. Siempre se envía una petición POST, con un JSON que indique las claves de los datos que se desean obtener siguiendo la jerarquía definida por el Esquema.
+
+Por ej.:
+
+```json
+/* Datos de Request */
+query FetchBlogsQuery {
+  user(username: "mluukkai") {
+    followedUsers {
+      blogs {
+        comments {
+          user {
+            blogs {
+              title
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Datos de Response */
+{
+  "data": {
+    "followedUsers": [
+      {
+        "blogs": [
+          {
+            "comments": [
+              {
+                "user": {
+                  "blogs": [
+                    {
+                      "title": "Goto considered harmful"
+                    },
+                    {
+                      "title": "End to End Testing with Cypress is most enjoyable"
+                    },
+                    {
+                      "title": "Navigating your transition to GraphQL"
+                    },
+                    {
+                      "title": "From REST to GraphQL"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Esquemas
+
+Consiste en la definición de los nombres de las claves y los tipos de datos que tendrá cada una.
+
+```js
+type Person {
+  name: String!
+  phone: String
+  street: String!
+  city: String!
+  id: ID!
+}
+```
+
+Los tipos de datos que existen son:
+
+- __Int__: Entero de 32-bits
+- __Float__: un valor decimal.
+- __String__: Secuencia de caracteres UTF‐8 .
+- __Boolean__: true o false.
+- __ID__: Identificador único generado por el motor de GraphQL, sin embargo, es un String al final.
+
+Estos tipos básicos se llaman __escalares__. Existen también los tipos "custom" que son tipos generados basados en los otros, como por ejemplo, crear un tipo Date.
+
+### Modificadores de Tipo
+
+Desde los tipos se pueden generar derivados de los mismos, que cambian el formato que tendrán los datos.
+
+- __Listas__: Denotadas con corchetes (`[]`) indican que el resultado a obtener es una lista de valores.
+- __Not Null__: Denotadas con un signo de exclamación (`!`) indican que el dato al que acompañan no puede ser igual a NULL.
+- __Enums__: Denotadas con llaves (`{}`), indican un conjunto de valores que delimitan los posibles a asignar a una variable.
+
+### Consultas
+
+Las consultas (querys) determinan las "operaciones" que se podrán realizar al endpoint definido, es decir, qué datos se podrán obtener al consultar al endpoint.
+
+```js
+type Query {
+  personCount: Int!
+  allPersons: [Person!]!
+  findPerson(name: String!): Person
+}
+```
+
+### apollo-server
+
+Es el package más popular para poder implementar un servidor de GraphQL en Node.
+
+```sh
+# Se instala la versión 4 que es la actual, las anteriores ya fueron deprecadas
+npm install @apollo/server graphql
+
+# Versión anterior y ya deprecada
+# npm install apollo-server graphql
+```
+
+### Implementación de servidor de Graph QL
+
+Para implementarlo, se debe definir los `typeDefs` (Esquemas) y los `resolvers` (Querys). Estas ultimas consisten en funciones que rellenan los valores de un campo definido en el esquema.
+
+El `ApolloServer` se crea usando tanto los typeDefs como los resolvers. Luego, se procede a levantar el servidor en modo stand-alone.
+
+```js
+const { ApolloServer } = require('@apollo/server')
+const { startStandaloneServer } = require('@apollo/server/standalone')
+
+let persons = [
+  {
+    name: "Arto Hellas",
+    phone: "040-123543",
+    street: "Tapiolankatu 5 A",
+    city: "Espoo",
+    id: "3d594650-3436-11e9-bc57-8b80ba54c431"
+  },
+  {
+    name: "Matti Luukkainen",
+    phone: "040-432342",
+    street: "Malminkaari 10 A",
+    city: "Helsinki",
+    id: '3d599470-3436-11e9-bc57-8b80ba54c431'
+  },
+  {
+    name: "Venla Ruuska",
+    street: "Nallemäentie 22 C",
+    city: "Helsinki",
+    id: '3d599471-3436-11e9-bc57-8b80ba54c431'
+  },
+]
+
+const typeDefs = `#graphql
+  type Person {
+    name: String!
+    phone: String
+    street: String!
+    city: String!
+    id: ID!
+  }
+
+  type Query {
+    personCount: Int!
+    allPersons: [Person!]!
+    findPerson(name: String!): Person
+  }
+`
+// En este punto, el parámetro args, contiene los parámetros enviados a la consulta.
+const resolvers = {
+  Query: {
+    personCount: () => persons.length,
+    allPersons: () => persons,
+    findPerson: (root, args) =>
+      persons.find(p => p.name === args.name)
+  }
+}
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+})
+
+startStandaloneServer(server, {
+  listen: { port: 4000 },
+}).then(({ url }) => {
+  console.log(`Server ready at ${url}`)
+})
+```
+
+### Petición y respuesta desde GraphQL
+
+Con esa definición una request válida se haría enviando un POST a `http://localhost:4000` con el body siguiente:
+
+```json
+query {
+  allPersons {
+    name
+    street
+    city
+  }
+}
+```
+
+Lo cual obtendrá esta response:
+
+```json
+{
+  "data": {
+    "allPersons": [
+      {
+        "name": "Arto Hellas",
+        "street": "Tapiolankatu 5 A",
+        "city": "Espoo"
+      },
+      {
+        "name": "Matti Luukkainen",
+        "street": "Malminkaari 10 A",
+        "city": "Helsinki"
+      },
+      {
+        "name": "Venla Ruuska",
+        "street": "Nallemäentie 22 C",
+        "city": "Helsinki"
+      }
+    ]
+  }
+}
+```
+
+Otro ejemplo, que usa parámetros para poder filtrar la información obtenida:
+
+```json
+// request
+query {
+  findPerson(name: "Matti Luukkainen") {
+    name
+    phone
+    street
+    city
+  }
+}
+
+// response
+{
+  "data": {
+    "findPerson": {
+      "name": "Matti Luukkainen",
+      "phone": "040-432342",
+      "street": "Malminkaari 10 A",
+      "city": "Helsinki"
+    }
+  }
+}
+```
+
+Cada resolver cuenta con 4 parámetros. Estos se pueden revisar [aquí](https://the-guild.dev/graphql/tools/docs/resolvers#resolver-function-signature).
+
+#### Alias y multiples querys
+
+Se debe considerar que es posible enviar más de una solicitud de campos en una sola request.
+
+```json
+// request
+query {
+  personCount,
+  allPersons(phone:YES) {
+    name
+    phone
+    address {
+      city
+      street
+    }
+  }
+}
+
+// response
+{
+  "data": {
+    "personCount": 3,
+    "allPersons": [
+      {
+        "name": "Arto Hellas",
+        "phone": "040-123543",
+        "address": {
+          "city": "Espoo",
+          "street": "Tapiolankatu 5 A"
+        }
+      },
+      {
+        "name": "Matti Luukkainen",
+        "phone": "040-432342",
+        "address": {
+          "city": "Helsinki",
+          "street": "Malminkaari 10 A"
+        }
+      }
+    ]
+  }
+}
+
+```
+
+Además, que es posible usar más de una vez la misma query, dándole un alias:
+
+```json
+// request
+query {
+  havePhone: allPersons(phone: YES){
+    name
+  }
+  phoneless: allPersons(phone: NO){
+    name
+  }
+}
+
+// response
+{
+  "data": {
+    "havePhone": [
+      {
+        "name": "Arto Hellas"
+      },
+      {
+        "name": "Matti Luukkainen"
+      }
+    ],
+    "phoneless": [
+      {
+        "name": "Venla Ruuska"
+      }
+    ]
+  }
+}
+```
+
+### Resolver predeterminado
+
+Para cada esquema se define de forma automática, un resolver que retorna la clave consultada.
+
+```js
+
+const resolvers = {
+  Query: {
+    personCount: () => persons.length,
+    allPersons: () => persons,
+    findPerson: (root, args) => persons.find(p => p.name === args.name)
+  },
+  /* Esto es un ejemplo de como es por debajo definido.
+  Aquí root hace referencia a los valores en sí del esquema consultado.
+  */
+  Person: {
+    name: (root) => root.name,
+    phone: (root) => root.phone,
+    street: (root) => root.street,
+    city: (root) => root.city,
+    id: (root) => root.id
+  }
+}
+```
+
+Por tanto, en caso de necesitar modificar este comportamiento, se puede definir un resolver específico que cambie la información obtenida al consultar cualquier campo, por ej.:
+
+```js
+Person: {
+  street: (root) => "Manhattan",
+  city: (root) => "New York"
+}
+```
+
+Esto es útil en caso de que se quiera generar un objeto especial de resultado, en lugar del obtenido normalmente. Si se quisiera, por ej., mostrar los campos `street` y `city` dentro de un objeto `address`, se debe manipular el objeto Person para que use un resolver distinto:
+
+```js
+
+// ...
+
+const typeDefs = `#graphql
+  type Address {
+    street: String!
+    city: String!
+  }
+
+  type Person {
+    name: String!
+    phone: String
+    address: Address!
+    id: ID!
+  }
+
+  type Query {
+    personCount: Int!
+    allPersons: [Person!]!
+    findPerson(name: String!): Person
+  }
+`
+
+
+const resolvers = {
+  Query: {
+    personCount: () => persons.length,
+    allPersons: () => persons,
+    findPerson: (root, args) =>
+      persons.find(p => p.name === args.name)
+  },
+  Person: {
+    address: (root) => {
+      return {
+        street: root.street,
+        city: root.city
+      }
+    }
+  }
+}
+
+```
+
+### Mutaciones
+
+Son las operaciones necesarias para poder modificar datos en GraphQL.
+
+Para implementarlas se deben generar como un nuevo tipo dentro del esquema, en donde se debe indicar los datos que deben enviarse y son requeridos (indicando si son NO nulos) y además, el tipo de datos que se retornará:
+
+```js
+
+const typeDefs = `#graphql
+  // ...
+
+  type Mutation {
+    addPerson(
+      name: String!
+      phone: String
+      street: String!
+      city: String!
+    ): Person
+  }
+`
+```
+
+Definir la función que hará la mutación. Dentro de la función se debe utilizar alguna utilidad para poder el ID y asegurar que sea único. Para lo último se utiliza `uuid` (`npm i uuid`)
+
+```js
+  const { v1: uuid } = require('uuid')
+
+  // ...
+
+  Mutation: {
+    addPerson: (root, args) => {
+      const person = { ...args, id: uuid() }
+      persons = persons.concat(person)
+      return person
+    }
+  }
+```
+
+En caso de querer modificar datos, se hace un proceso similar, es decir, modificar el esquema Mutations, indicando los campos a enviar y el campo a retornar y luego, agregar la operación como un nuevo resolver.
+
+```js
+  const typeDefs = `#graphql
+    // ...
+    type Mutation {
+      addPerson(
+        name: String!
+        phone: String
+        street: String!
+        city: String!
+      ): Person
+      editNumber(
+        name: String!
+        phone: String!
+      ): Person
+    }
+  `
+
+  const resolvers = {
+    Query: {
+      // ...
+    },
+    Mutation: {
+      // ...
+      editNumber: (root, args) => {
+        const person = persons.find(p => p.name === args.name)
+        if (!person) {
+          return null
+        }
+
+        const updatedPerson = { ...person, phone: args.phone }
+        persons = persons.map(p => p.name === args.name ? updatedPerson : p)
+        return updatedPerson
+      }
+    }
+  }
+```
+
+#### Uso de las mutaciones
+
+Para poder aplicar la mutación y generar un nuevo registro, se debe usar la siguiente "consulta":
+
+```json
+mutation {
+  addPerson(
+    name: "Pekka Mikkola"
+    phone: "045-2374321"
+    street: "Vilppulantie 25"
+    city: "Helsinki"
+  ) {
+    name
+    phone
+    address{
+      city
+      street
+    }
+    id
+  }
+}
+```
+
+lo cual genera la siguiente response:
+
+```json
+{
+  "data": {
+    "addPerson": {
+      "name": "Pekka Mikkola",
+      "phone": "045-2374321",
+      "address": {
+        "city": "Helsinki",
+        "street": "Vilppulantie 25"
+      },
+      "id": "da4b0470-faec-11ef-b6d1-d3e14af5b04d"
+    }
+  }
+}
+
+```
+
+### Manejo de errores
+
+Se debe considerar que al hacer una query se debe indicar los campos que se desea obtener de alguno que NO sea de tipo escalar, ya que es un error no indicarlo y la response será un error que indicará esa situación.
+
+Por ej. la query siguiente usa el campo `state` que no es válido dentro de `address`:
+
+```json
+
+query {
+  allPersons {
+    name
+    phone
+    address {
+      state
+    }
+  }
+}
+
+```
+
+La response obtenida indica esta situación:
+
+```json
+{
+  "errors": [
+    {
+      "message": "Cannot query field \"state\" on type \"Address\". Did you mean \"street\"?",
+      "locations": [
+        {
+          "line": 6,
+          "column": 7
+        }
+      ],
+      "extensions": {
+        "code": "GRAPHQL_VALIDATION_FAILED",
+        "stacktrace": [
+          // ...
+        ]
+      }
+    }
+  ]
+}
+```
+
+Esta implementación es automática gracias a `apollo-server` y la definición del esquema de GraphQL, sin embargo, cuando se trata de una mutación, se requiere aplicar validaciones manuales para restringir valores más complejos.
+
+Para ello, se hace uso del manejo de errores de GraphQL:
+
+```js
+
+const { GraphQLError } = require('graphql')
+
+// ...
+
+  Mutation: {
+    addPerson: (root, args) => {
+      if (persons.find(p => p.name === args.name)) {
+        throw new GraphQLError('Name must be unique', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args.name
+          }
+        })
+      }
+      const person = { ...args, id: uuid() }
+      persons = persons.concat(person)
+      return person
+    }
+  }
+
+```
+
+### Enums
+
+Corresponden a un conjunto de valores que se pueden usar para restringir un campo.
+
+Se definen dentro del esquema usando la palabra `enum`:
+
+```js
+// ...
+
+
+const typeDefs = `#graphql
+  enum YesNo {
+    YES
+    NO
+  }
+
+  type Address {
+    street: String!
+    city: String!
+  }
+  // ...
+
+  type Query {
+    personCount: Int!
+    allPersons(phone: YesNo): [Person!]!
+    findPerson(name: String!): Person
+  }
+
+`
+
+// ...
+
+const resolvers = {
+  Query: {
+    personCount: () => persons.length,
+    allPersons: (root, args) => {
+      if (!args.phone) {
+        return persons
+      }
+      const byPhone = (person) =>
+        args.phone === 'YES' ? person.phone : !person.phone
+      return persons.filter(byPhone)
+    },
+
+    // ...
+  }
+  // ...
+}
+```
+
+El enum mostrado en el ejemplo, luego es usado en la query allPersons para poder indicar si se quiere filtrar las personas dependiendo si tienen teléfono.
