@@ -5253,3 +5253,431 @@ const resolvers = {
 ```
 
 El enum mostrado en el ejemplo, luego es usado en la query allPersons para poder indicar si se quiere filtrar las personas dependiendo si tienen teléfono.
+
+### Variables en consultas
+
+Normalmente, se requerirá enviar información de forma dinámica para poder aplicar los filtros correspondientes en una consulta. Esto se logra usando la sintaxis `$variable` dentro de la consulta. El valor de esta variable se envía de forma separada en un objeto llamado `variables`, en el que se indica el nombre de la variable como clave y su valor se asignará a la misma.
+
+```json
+// Request
+mutation {
+  editAuthor(name: $nombre, setBornTo: $year) {
+    name
+    born
+  }
+}
+
+// Variables
+{
+  "nombre": "Perico",
+  "year": 1968
+}
+```
+
+### Uso de GraphQL en React
+
+Para ello, se recomienda usar una librería que permite omitir los detalles de la comunicación entre el cliente y servidor, esta es [`@apollo/client`](https://www.npmjs.com/package/@apollo/client). Documentación [aquí](https://www.apollographql.com/docs/react)
+
+#### Preparación inicial
+
+Se instalan los siguientes packages: `npm install @apollo/client graphql`.
+
+Aquí `@apollo/client`, permite el manejo de cache, de estado local, de errores y la capa de la Vista basado en React. `graphql`, por otro lado, permite parsear las querys de tipo GraphQL.
+
+Luego, se genera un nuevo cliente de Apollo (cliente que se usa para poder conectarse desde el Frontend con el backend de GraphQL) , el cual se disponibiliza para toda la aplicación dentro del `main.jsx`, a través del uso de `ApolloProvider`, el cual funciona de forma similar al `Context.Provider`, usado anteriormente.
+
+```js
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+
+import { ApolloClient, ApolloProvider, HttpLink, InMemoryCache } from '@apollo/client'
+
+import './index.css'
+import App from './App.jsx'
+
+
+const client = new ApolloClient({
+  cache: new InMemoryCache(),
+  link: new HttpLink({
+    uri: 'http://localhost:4000',
+  })
+})
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <ApolloProvider client={client}>
+      <App />
+    </ApolloProvider>
+  </StrictMode>,
+)
+```
+
+#### Realización de consultas
+
+Para ello se usa el hook personalizado `useQuery` de Apollo Client, el cual permite tomar un string que contenga una consulta en formato GraphQL, y retorna un objeto con el resultado obtenido (`data`) desde el servidor GraphQL, en conjunto con propiedades que permiten determinar si la query aún está cargando (`loading`), o tuvo un error (`error`).
+
+```js
+
+import { gql, useQuery } from '@apollo/client';
+
+const ALL_PERSONS = gql`
+query {
+  allPersons  {
+    name
+    phone
+    id
+  }
+}
+`
+
+const App = () => {
+  const result = useQuery(ALL_PERSONS)
+
+  if (result.loading) {
+    return <div>loading...</div>
+  }
+  if (result.error) {
+    return <div>Error detected... Review console.</div>
+  }
+  return (
+    <div>
+      {result.data.allPersons.map(p => p.name).join(', ')}
+    </div>
+  )
+}
+
+```
+
+#### Uso de Variables en consultas
+
+Considerando la necesidad que hay de filtrar información para obtenerla desde las querys definidas, GraphQL define la forma para enviarlas así:
+
+- Se le da un nombre a la consulta, por ej. `findPersonByName`
+
+- Se indica con un signo $ más el nombre de la variable dentro de los parámetros de la query, el cual luego se usa dentro de la query asociandolo al parámetro que se envía a la función.
+
+```json
+query findPersonByName($nameToSearch: String!) {
+  findPerson(name: $nameToSearch) {
+    name
+    phone
+    address {
+      street
+      city
+    }
+  }
+}
+
+```
+
+- Para invocar la query definida se usa `useLazyQuery()` la cual permite hacer la llamada a la query de forma manual, a diferencia de `useQuery()` que lo hace automáticamente.
+
+```js
+
+import { useState, useEffect } from 'react'
+import { gql, useLazyQuery } from '@apollo/client'
+
+
+const FIND_PERSON = gql`
+  query findPersonByName($nameToSearch: String!) {
+    findPerson(name: $nameToSearch) {
+      name
+      phone
+      id
+      address {
+        street
+        city
+      }
+    }
+  }
+`
+
+const Persons = ({ persons }) => {
+  // useLazyQuery, retorna un array con la función que permite invocar la query y result, que es el resultado de la ejecución de la misma.
+  const [getPerson, result] = useLazyQuery(FIND_PERSON)
+  const [person, setPerson] = useState(null)
+
+
+  const showPerson = (name) => {
+    // Se debe enviar un objeto con la propiedad "variables", que contendrá un objeto cuyas propiedades serán los nombres de las variables y su valor será el valor de las mismas.
+
+    getPerson({ variables: { nameToSearch: name } })
+  }
+
+
+  useEffect(() => {
+    if (result.data) {
+      setPerson(result.data.findPerson)
+    }
+  }, [result])
+
+
+  if (person) {
+    return (
+      <div>
+        <h2>{person.name}</h2>
+        <div>{person.address.street} {person.address.city}</div>
+        <div>{person.phone}</div>
+        <button style={{ marginLeft: '2px' }} onClick={() => setPerson(null)}>close</button>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <h2>Persons</h2>
+      {persons.map(p =>
+        <div key={p.name}>
+          {p.name} {p.phone}
+
+          <button onClick={() => showPerson(p.name)} >
+            show address
+          </button>
+        </div>
+      )}
+    </div>
+  )
+
+}
+
+
+```
+
+La ventaja de obtener los datos usando `useLazyQuery()` es que los valores son dejados en caché, por lo que si se detecta que el ID obtenido del dato es el mismo que ya existe, la request no se realiza y se obtiene la información desde el caché. Esto también ocurre al obtener un nuevo dato que referencia al mismo ID: se obtiene la información desde el servidor y se guarda en la caché para evitar nuevas consultas futuras.
+
+### Mutaciones: Creación
+
+Al igual que para las consultas, las variables son definidas con el signo $. Para aplicarlas se genera la query correspondiente y se usa el hook `useMutation()`. Aquí se muestra un formulario de ejemplo que usa este hook:
+
+```js
+
+import React, { useState } from 'react'
+import { gql, useMutation } from '@apollo/client'
+
+const CREATE_PERSON = gql`
+mutation createPerson($name: String!, $street: String!, $city: String!, $phone: String) {
+  addPerson(
+    name: $name,
+    street: $street,
+    city: $city,
+    phone: $phone
+  ) {
+    name
+    phone
+    id
+    address {
+      street
+      city
+    }
+  }
+}
+`
+
+const PersonForm = () => {
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [street, setStreet] = useState('')
+  const [city, setCity] = useState('')
+
+
+  const [ createPerson ] = useMutation(CREATE_PERSON)
+
+  const submit = (event) => {
+    event.preventDefault()
+
+
+    createPerson({  variables: { name, phone, street, city } })
+
+    setName('')
+    setPhone('')
+    setStreet('')
+    setCity('')
+  }
+
+  return (
+    <div>
+      <h2>create new</h2>
+      <form onSubmit={submit}>
+        <div>
+          name <input value={name}
+            onChange={({ target }) => setName(target.value)}
+          />
+        </div>
+        <div>
+          phone <input value={phone}
+            onChange={({ target }) => setPhone(target.value)}
+          />
+        </div>
+        <div>
+          street <input value={street}
+            onChange={({ target }) => setStreet(target.value)}
+          />
+        </div>
+        <div>
+          city <input value={city}
+            onChange={({ target }) => setCity(target.value)}
+          />
+        </div>
+        <button type='submit'>add!</button>
+      </form>
+    </div>
+  )
+}
+
+export default PersonForm
+
+```
+
+#### Mutaciones:  Manejo de caché
+
+Considerando que las querys mantienen en caché la información que obtienen, es necesario hacer que la vuelvan a obtener. Esto se puede lograr de las siguientes maneras:
+
+1. Agregar "polling" a las consultas: Permite realizar automáticamente la query en un intervalo definido:
+
+```js
+  const result = useQuery(ALL_PERSONS, {
+    pollInterval: 2000
+  })
+```
+
+Esto tiene el problema de que se realizan llamadas innecesarias al servidor, considerando la cantidad de veces que tendrías que obtener la información.
+
+1. Agregar el parámetro `refetchQueries` a la mutation aplicada:
+
+```js
+const ALL_PERSONS = gql`
+  query  {
+    allPersons  {
+      name
+      phone
+      id
+    }
+  }
+`
+
+const PersonForm = (props) => {
+  // ...
+
+  const [ createPerson ] = useMutation(CREATE_PERSON, {
+    refetchQueries: [ { query: ALL_PERSONS } ]
+  })
+
+}
+```
+
+Con esta opción se evita el tráfico innecesario, pero no se actualiza la información para otros usuarios.
+Sin embargo, es posible enviar un listado de querys para permitir ejecutar varias a la vez.
+
+```js
+  const [ createPerson ] = useMutation(CREATE_PERSON, {
+    refetchQueries: [ { query: ALL_PERSONS }, { query: OTHER_QUERY }, { query: ... } ] // pass as many queries as you need
+  })
+```
+
+#### Mutaciones: Manejo de errores
+
+Para ello, se debe usar la propiedad `onError` del useMutation:
+
+```js
+
+const PersonForm = ({ setError }) => {
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [street, setStreet] = useState('')
+  const [city, setCity] = useState('')
+
+
+  const [createPerson] = useMutation(CREATE_PERSON, {
+    refetchQueries: [{ query: ALL_PERSONS }],
+    onError: (error) => {
+      // const errors = error.graphQLErrors[0].extensions.error.errors
+      // const messages = Object.values(errors).map(e => e.message).join('\n')
+      const messages = error.graphQLErrors[0].message
+      setError(messages)
+    }
+  })
+
+  // ...
+}
+```
+
+En este caso, `setError` es una función implementada en App.jsx, que muestra el valor enviado como una notificación.
+
+### Mutaciones: Edición
+
+Para la edición se hace un proceso similar que para la creación: definir la query a utilizar para la modificación de datos, definir el formulario necesario y aplicar `useMutation()` para poder invocar la mutación.
+
+```js
+
+import React, { useState, useEffect } from 'react'
+import { useMutation } from '@apollo/client'
+
+const EDIT_NUMBER = gql`
+  mutation editNumber($name: String!, $phone: String!) {
+    editNumber(name: $name, phone: $phone)  {
+      name
+      phone
+      address {
+        street
+        city
+      }
+      id
+    }
+  }
+`
+
+const PhoneForm = ({ setError }) => {
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+
+
+  const [changeNumber, result] = useMutation(EDIT_NUMBER)
+
+  const submit = (event) => {
+    event.preventDefault()
+
+
+    changeNumber({ variables: { name, phone } })
+
+    setName('')
+    setPhone('')
+  }
+
+  useEffect(() => {
+    if (result.data && result.data.editNumber === null) {
+      setError('person not found')
+    }
+  }, [result.data])  // eslint-disable-line
+
+
+  return (
+    <div>
+      <h2>change number</h2>
+
+      <form onSubmit={submit}>
+        <div>
+          name <input
+            value={name}
+            onChange={({ target }) => setName(target.value)}
+          />
+        </div>
+        <div>
+          phone <input
+            value={phone}
+            onChange={({ target }) => setPhone(target.value)}
+          />
+        </div>
+        <button type='submit'>change number</button>
+      </form>
+    </div>
+  )
+}
+
+export default PhoneForm
+
+```
+
+Las consideraciones a tener en cuenta son:
+
+1. El caché se actualiza automáticamente al hacer la modificación, debido a la existencia de una modificación en el ID, por lo que no es necesario hacer un "refresco" de los datos.
+1. Para GraphQL el hecho de NO encontrar algún valor para poder realizar la actualización no constituye un error, por tanto, en caso de querer validar esa situación se debe hacer referencia al resultado de la operación (variable `result` obtenida del `useMutation()`). Si el resultado es `null`, quiere decir que no hubo coincidencias para poder hacer la modificación, lo que permite mostrar un error de ser necesario. Como el dato depende de una entidad externa, esa evaluación se asocia a un `useEffect()`.
