@@ -548,6 +548,8 @@ Con ello, al usar el comando `npm run server`, se podrá tener una instancia bac
 
 ---
 
+Para esta sección revisar [notes-backend](https://github.com/gus25888/notes-backend)
+
 ### Express
 
 ---
@@ -4602,6 +4604,8 @@ Para un ejemplo, se puede revisar el componente `App` dentro del directorio anec
 
 ## Parte 8 - GraphQL
 
+> NOTA: Para la revisión de la implementación completa, se debe revisar los directorios phonebook-be-graphql y phonebook-fe-graphql.
+
 GraphQL consiste en una forma distinta de obtener información desde un backend. A diferencia de REST, lo que se indica en una petición GraphQL es los datos que se requieren obtener basado en la definición de Esquema y Consultas definida. Siempre se envía una petición POST, con un JSON que indique las claves de los datos que se desean obtener siguiendo la jerarquía definida por el Esquema.
 
 Por ej.:
@@ -4693,7 +4697,7 @@ Desde los tipos se pueden generar derivados de los mismos, que cambian el format
 
 ### Consultas
 
-Las consultas (querys) determinan las "operaciones" que se podrán realizar al endpoint definido, es decir, qué datos se podrán obtener al consultar al endpoint.
+Las consultas (querys) determinan las "operaciones" que se podrán realizar al endpoint definido, es decir, qué datos se podrán obtener al consultar al endpoint. Cada una de ellas se asocia a un `resolver` (ver más adelante).
 
 ```js
 type Query {
@@ -5681,3 +5685,305 @@ Las consideraciones a tener en cuenta son:
 
 1. El caché se actualiza automáticamente al hacer la modificación, debido a la existencia de una modificación en el ID, por lo que no es necesario hacer un "refresco" de los datos.
 1. Para GraphQL el hecho de NO encontrar algún valor para poder realizar la actualización no constituye un error, por tanto, en caso de querer validar esa situación se debe hacer referencia al resultado de la operación (variable `result` obtenida del `useMutation()`). Si el resultado es `null`, quiere decir que no hubo coincidencias para poder hacer la modificación, lo que permite mostrar un error de ser necesario. Como el dato depende de una entidad externa, esa evaluación se asocia a un `useEffect()`.
+
+### Uso de GraphQL con Mongoose (MongoDB)
+
+Para ello, al igual que para las definiciones de tipo REST, es necesario:
+
+- generar los procesos de conexión con la BD, es decir, instalar las dependencias (`npm i mongoose dotenv`)
+- crear el archivo `.env` que contiene las variables de entorno con los datos de conexión
+- definir los `schemas` de cada entidad (modelos)
+
+Con eso implementado es posible asociar los `resolvers` con los métodos definidos por cada modelo, lo que permite obtener y gestionar los datos desde y hacia la BD de Mongo.
+
+Por ej. Esquema de Persona:
+
+```js
+const mongoose = require('mongoose')
+
+const schema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    minlength: 5
+  },
+  phone: {
+    type: String,
+    minlength: 5
+  },
+  street: {
+    type: String,
+    required: true,
+    minlength: 5
+  },
+  city: {
+    type: String,
+    required: true,
+    minlength: 3
+  },
+})
+
+module.exports = mongoose.model('Person', schema)
+```
+
+Asociado a ese esquema sus resolvers serían estos:
+
+```js
+
+// ...
+
+const Person = require('./models/person')
+
+// ...
+
+const resolvers = {
+  Query: {
+    personCount: async () => Person.collection.countDocuments(),
+    allPersons: (root, args) => {
+      if (!args.phone) {
+        return Person.find({})
+      }
+
+      /*
+      * El operador $exists, busca si el campo indicado (phone) está incluido dentro del esquema buscado. * * Esto implica que es posible que tenga valor null, y aún así lo incluya en el resultado.
+      */
+      return Person.find({ phone: { $exists: args.phone === 'YES' } })
+    },
+    findPerson: async (root, args) => Person.findOne({ name: args.name }),
+  },
+  Person: {
+    address: (root) => {
+      return {
+        street: root.street,
+        city: root.city
+      }
+    }
+  },
+  Mutation: {
+    addPerson: async (root, args) => {
+      const person = new Person({ ...args })
+      try {
+        await person.save()
+      } catch (error) {
+        throw new GraphQLError('Saving user failed', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args.name,
+            error
+          }
+        })
+      }
+    },
+    editNumber: async (root, args) => {
+      const person = await Person.findOne({ name: args.name })
+      person.phone = args.phone
+
+      try {
+        await person.save()
+      } catch (error) {
+        throw new GraphQLError('Editing number failed', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args.name,
+            error
+          }
+        })
+      }
+      return person
+    }
+  }
+}
+
+```
+
+Se debe considerar que se modifican las funciones `resolver`, para que todas sean asíncronas considerando la obtención de datos desde una Entidad Externa.
+
+### Integración de GraphQL con login de usuarios
+
+Considerando que el login implica operaciones similares a la generación de un esquema para otras operaciones, se debe realizar un proceso similar al descrito en la sección anterior. Además, por el uso de tokens se requiere instalar JSON_WEB_TOKEN (`npm install jsonwebtoken`).
+
+> IMPORTANTE: Para este ejemplo, NO se incluye una password como parte de la creación del usuario. La password usada es siempre `secret`.
+
+Esquema de Mongoose:
+
+```js
+
+const mongoose = require('mongoose')
+
+const schema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    minlength: 3
+  },
+  friends: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Person'
+    }
+  ],
+})
+
+module.exports = mongoose.model('User', schema)
+
+```
+
+Modificaciones al schema de GraphQL:
+
+```js
+
+type User {
+  username: String!
+  friends: [Person!]!
+  id: ID!
+}
+
+type Token {
+  value: String!
+}
+
+type Query {
+  // ..
+  me: User
+}
+
+type Mutation {
+  // ...
+  createUser(
+    username: String!
+  ): User
+  login(
+    username: String!
+    password: String!
+  ): Token
+}
+
+```
+
+Resolvers implementados: Considerar que esto requiere que haya un SECRET definido en .env (JWT_SECRET)
+
+```js
+
+const jwt = require('jsonwebtoken')
+
+Mutation: {
+  // ..
+  createUser: async (root, args) => {
+    const user = new User({ username: args.username })
+
+    return user.save()
+      .catch(error => {
+        throw new GraphQLError('Creating the user failed', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args.name,
+            error
+          }
+        })
+      })
+  },
+  login: async (root, args) => {
+    const user = await User.findOne({ username: args.username })
+
+    if ( !user || args.password !== 'secret' ) {
+      throw new GraphQLError('wrong credentials', {
+        extensions: {
+          code: 'BAD_USER_INPUT'
+        }
+      })
+    }
+
+    const userForToken = {
+      username: user.username,
+      id: user._id,
+    }
+
+    return { value: jwt.sign(userForToken, process.env.JWT_SECRET) }
+  },
+},
+
+```
+
+Adicionalmente, como el login es algo que se requiere para toda request que se realice al backend, es necesario agregar el token obtenido. Para ello, se agrega la propiedad `context` al `startStandaloneServer()`, lo cual permite identificar al usuario ingresado trayendo sus datos y así compartiendolos con todos los `resolvers`:
+
+```js
+
+startStandaloneServer(server, {
+  listen: { port: 4000 },
+
+  context: async ({ req, res }) => {
+    const auth = req ? req.headers.authorization : null
+    if (auth && auth.startsWith('Bearer ')) {
+      const decodedToken = jwt.verify(
+        auth.substring(7), process.env.JWT_SECRET
+      )
+      const currentUser = await User
+        .findById(decodedToken.id).populate('friends')
+      return { currentUser }
+    }
+  },
+}).then(({ url }) => {
+  console.log(`Server ready at ${url}`)
+})
+
+```
+
+El valor del usuario que se encuentra en el `context` del servidor, puede ser accedido al usar el tercer parámetro en cualquier `resolver`. Si no hay usuario logueado, ese valor será igual a `null`.
+
+```js
+const resolvers = {
+  Query: {
+    // ...
+    me: (root, args, context) => {
+      return context.currentUser
+    }
+  },
+  //  ...
+}
+```
+
+Para validar que el usuario que hace la operación se encuentra autenticado, se obtienen los datos desde el `context`. En caso de encontrarse con un `null`, se lanza un error:
+
+```js
+
+Mutation: {
+
+    addPerson: async (root, args, context) => {
+      const person = new Person({ ...args })
+
+      const currentUser = context.currentUser
+
+
+      if (!currentUser) {
+        throw new GraphQLError('not authenticated', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+          }
+        })
+      }
+
+      try {
+        await person.save()
+
+        currentUser.friends = currentUser.friends.concat(person)
+        await currentUser.save()
+      } catch (error) {
+        throw new GraphQLError('Saving user failed', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args.name,
+            error
+          }
+        })
+      }
+
+      return person
+    },
+  //...
+}
+
+```
+
+`

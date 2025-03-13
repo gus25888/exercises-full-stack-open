@@ -4,7 +4,6 @@ const { v1: uuid } = require('uuid')
 const { GraphQLError } = require('graphql')
 
 
-// TODO: Sugerir las modificaciones al material del curso para considerar la v4 de apollo-server
 let persons = [
   {
     name: "Arto Hellas",
