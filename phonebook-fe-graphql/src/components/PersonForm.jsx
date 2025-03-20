@@ -10,20 +10,27 @@ const PersonForm = ({ setError }) => {
 
 
   const [createPerson] = useMutation(CREATE_PERSON, {
-    refetchQueries: [{ query: ALL_PERSONS }],
+    // refetchQueries: [{ query: ALL_PERSONS }],
     onError: (error) => {
-      // const errors = error.graphQLErrors[0].extensions.error.errors
-      // const messages = Object.values(errors).map(e => e.message).join('\n')
-      const messages = error.graphQLErrors[0].message
+      const errors = error.graphQLErrors[0].extensions.error.errors
+      const messages = Object.values(errors).map(e => e.message).join('\n')
+      // const messages = error.graphQLErrors[0].message
       setError(messages)
-    }
+    },
+    update: (cache, response) => {
+      cache.updateQuery({ query: ALL_PERSONS }, ({ allPersons }) => {
+        return {
+          allPersons: allPersons.concat(response.data.addPerson),
+        }
+      })
+    },
   })
 
   const submit = (event) => {
     event.preventDefault()
 
-
-    createPerson({ variables: { name, phone, street, city } })
+    //* Con esta validación para phone, se permite enviar un valor vacío en caso de que no se indique un teléfono.
+    createPerson({ variables: { name, street, city, phone: phone.length > 0 ? phone : undefined } })
 
     setName('')
     setPhone('')

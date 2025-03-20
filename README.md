@@ -5801,7 +5801,7 @@ Se debe considerar que se modifican las funciones `resolver`, para que todas sea
 
 ### Integración de GraphQL con login de usuarios
 
-Considerando que el login implica operaciones similares a la generación de un esquema para otras operaciones, se debe realizar un proceso similar al descrito en la sección anterior. Además, por el uso de tokens se requiere instalar JSON_WEB_TOKEN (`npm install jsonwebtoken`).
+Considerando que el login implica operaciones similares a la generación de un esquema para otras operaciones, se debe realizar un proceso similar al descrito en la sección anterior. Además, por el uso de tokens se requiere instalar JWT (`npm install jsonwebtoken`).
 
 > IMPORTANTE: Para este ejemplo, NO se incluye una password como parte de la creación del usuario. La password usada es siempre `secret`.
 
@@ -5906,24 +5906,33 @@ Mutation: {
 
 ```
 
-Adicionalmente, como el login es algo que se requiere para toda request que se realice al backend, es necesario agregar el token obtenido. Para ello, se agrega la propiedad `context` al `startStandaloneServer()`, lo cual permite identificar al usuario ingresado trayendo sus datos y así compartiendolos con todos los `resolvers`:
+Adicionalmente, como el login es algo que se requiere para toda request que se realice al backend, es necesario agregar el token obtenido. Para ello, se agrega la propiedad `context` al `startStandaloneServer()`, lo cual permite identificar al usuario ingresado trayendo sus datos y así compartiendolos con todos los `resolvers`.
+
+>IMPORTANTE: Se genera una función separada para generar el `context` con el objetivo de permitir reconocer las importaciones realizadas.
 
 ```js
+// ...
+
+const jwt = require('jsonwebtoken')
+
+const User = require('./models/user')
+
+// ...
+const authContext = async ({ req, res }) => {
+  const auth = req ? req.headers.authorization : null
+  if (auth && auth.startsWith('Bearer ')) {
+    const decodedToken = jwt.verify(
+      auth.substring(7), process.env.JWT_SECRET
+    )
+    const currentUser = await User
+      .findById(decodedToken.id).populate('friends')
+    return { currentUser }
+  }
+}
 
 startStandaloneServer(server, {
   listen: { port: 4000 },
-
-  context: async ({ req, res }) => {
-    const auth = req ? req.headers.authorization : null
-    if (auth && auth.startsWith('Bearer ')) {
-      const decodedToken = jwt.verify(
-        auth.substring(7), process.env.JWT_SECRET
-      )
-      const currentUser = await User
-        .findById(decodedToken.id).populate('friends')
-      return { currentUser }
-    }
-  },
+  context: authContext,
 }).then(({ url }) => {
   console.log(`Server ready at ${url}`)
 })
@@ -5986,4 +5995,205 @@ Mutation: {
 
 ```
 
+#### Modificaciones al Frontend para poder usar el login de usuarios
+
+Se debe generar un formulario de login, el cual se difiere de las otras versiones con React en el uso de `useMutation()`, para poder llamar a la mutation correspondiente, y en el uso de `useEffect()`.
+
+Mutation usada:
+
+```js
+export const LOGIN = gql`
+  mutation login($username: String!, $password: String!) {
+    login(username: $username, password: $password)  {
+      value
+    }
+  }
 `
+```
+
+Formulario generado:
+
+```js
+import React, { useState, useEffect } from 'react'
+import { useMutation } from '@apollo/client'
+import { LOGIN } from '../queries'
+
+const LoginForm = ({ setError, setToken }) => {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+
+
+  const [ login, result ] = useMutation(LOGIN, {
+    onError: (error) => {
+      setError(error.graphQLErrors[0].message)
+    }
+  })
+
+
+  useEffect(() => {
+    if ( result.data ) {
+      const token = result.data.login.value
+      setToken(token)
+      localStorage.setItem('phonenumbers-user-token', token)
+    }
+  }, [result.data]) // eslint-disable-line
+
+  const submit = async (event) => {
+    event.preventDefault()
+
+    login({ variables: { username, password } })
+  }
+
+  return (
+    <div>
+      <form onSubmit={submit}>
+        <div>
+          username <input
+            value={username}
+            onChange={({ target }) => setUsername(target.value)}
+          />
+        </div>
+        <div>
+          password <input
+            type='password'
+            value={password}
+            onChange={({ target }) => setPassword(target.value)}
+          />
+        </div>
+        <button type='submit'>login</button>
+      </form>
+    </div>
+  )
+}
+
+export default LoginForm
+
+```
+
+#### Logout y limpieza de caché
+
+En conjunto con dar la posibilidad de cerrar sesión se debe considerar que se debe limpiar el caché de ApolloClient, para evitar que datos que requieren sesión iniciada sean visibles cuando no hay una. Para ello, se debe usar el método `resetStore()`:
+
+```js
+const App = () => {
+  const [token, setToken] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
+  const result = useQuery(ALL_PERSONS)
+
+  const client = useApolloClient()
+
+  if (result.loading)  {
+    return <div>loading...</div>
+  }
+
+
+  const logout = () => {
+    setToken(null)
+    localStorage.clear()
+    client.resetStore()
+  }
+
+
+  if (!token) {
+    return (
+      <>
+        <Notify errorMessage={errorMessage} />
+        <LoginForm setToken={setToken} setError={notify} />
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Notify errorMessage={errorMessage} />
+
+      <button onClick={logout}>logout</button>
+      <Persons persons={result.data.allPersons} />
+      <PersonForm setError={notify} />
+      <PhoneForm setError={notify} />
+    </>
+  )
+}
+
+```
+
+#### Envío de token en el encabezado de la request
+
+Para poder lograr agregar el token en cada request se modifica la forma en que se levanta el ApolloClient usado a nivel global en la aplicación. En este caso, se genera el link de acceso del cliente (`httpLink`) y luego este se suma al link de autenticación (`authLink`), el cual extrae el token de autenticación desde el localStorage y lo agrega a los `headers` de cada solicitud.
+
+```js
+// ...
+
+import { ApolloClient, ApolloProvider, InMemoryCache, createHttpLink } from '@apollo/client'
+import { setContext } from '@apollo/client/link/context'
+
+import App from './App'
+
+
+const authLink = setContext((_, { headers }) => {
+  const token = localStorage.getItem('phonenumbers-user-token')
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : null,
+    }
+  }
+})
+
+const httpLink = createHttpLink({
+  uri: 'http://localhost:4000',
+})
+
+const client = new ApolloClient({
+  cache: new InMemoryCache(),
+  link: authLink.concat(httpLink)
+})
+
+createRoot(document.getElementById('root')).render(
+  // ...
+)
+```
+
+#### Actualización de caché luego de crear nuevos registros
+
+La opción utilizada anteriormente era usar la opción `refetchQueries` dentro de las propiedades de la llamada a `useMutation()`. Sin embargo, este tiene el inconveniente de que genera una nueva request por cada invocación.
+
+```js
+// ...
+  const [ createPerson ] = useMutation(CREATE_PERSON, {
+    refetchQueries: [  {query: ALL_PERSONS} ],
+    onError: (error) => {
+      const errors = error.graphQLErrors[0].extensions.error.errors
+      const messages = Object.values(errors).map(e => e.message).join('\n')
+      setError(messages)
+    }
+  })
+// ...
+```
+
+Otra opçión es usar la propiedad `update` a la cual se le envía una función, que permite gestionar manualmente el caché asociado. Esta función recibe el caché y la response como parámetros.
+
+```js
+// ...
+
+  const [ createPerson ] = useMutation(CREATE_PERSON, {
+    onError: (error) => {
+      setError(error.graphQLErrors[0].message)
+    },
+    update: (cache, response) => {
+      cache.updateQuery({ query: ALL_PERSONS }, ({ allPersons }) => {
+        return {
+          allPersons: allPersons.concat(response.data.addPerson),
+        }
+      })
+    },
+  })
+
+// ...
+```
+
+En este punto se debe comentar que `updateQuery()` toma el resultado (response) de la query enviada como primer parámetro (`ALL_PERSONS`) y se usa como parámetro de la función enviada como segundo parámetro. Aquí se desestructura (desde `data`) el valor `allPersons` y se le agrega los datos obtenidos de la response obtenida resultado de `useMutation()`.
+
+El manejo de caché de forma consistente es imperativo para poder evitar errores complejos de detectar. Se debe conocer las necesidades de la aplicación para determinar la mejor manera de manejar el caché. Es posible que sea necesario usar uno u otro método, o a veces no usar caché.
+
+Esto último se logra indicando un valor `no-cache` a la propiedad `fetchPolicy` usado en el hook `useQuery()`, lo cual se puede configurar de forma individual para cada query o de forma completa a todo el ApolloServer.
